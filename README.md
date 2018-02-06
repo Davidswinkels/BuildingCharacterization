@@ -11,7 +11,7 @@ __download_streetview_images.py__: This script still has to be added.
 
 __create_distribution_images.py__: After having the data in the correct format, a random distribution of buildings is appointed to training (60%), validation (20%) and testing (20%) categories. The random distribution is made so that buildings in the same neighbourhood do not get in separate categories. Otherwise training and testing might be biased, because two identical buildings in the same street can both be in training and testing dataset.
 
-__retrain_adj.py__: Re-training a convolutional neural network with premade training, validation and test datasets and to give more outcome statistics. Script was modified fromn [image retraining script](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/image_retraining/retrain.py) by Tensorflow.
+__retrain_adj.py__: Re-training a convolutional neural network with premade training, validation and test datasets and to give more outcome statistics. Script was modified from [image retraining script](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/image_retraining/retrain.py) by Tensorflow.
 
 __create_backup.py__: A script that makes a back-up of reports/scripts and stores it on a USB-stick.
 
