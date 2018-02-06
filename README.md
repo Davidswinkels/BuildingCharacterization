@@ -18,7 +18,7 @@ __create_backup.py__: A script that makes a back-up of reports/scripts and store
 Feel free to download, share and use these scripts.
 
 ## Document information
-__author__ = "David Swinkels"
-__github__ = "davidswinkels"
-__purpose__ = "Part of MSc thesis Geo-Information Science at Wageningen University"
-__status__ = "Production"
+* __author__ = "David Swinkels"
+* __github__ = "davidswinkels"
+* __purpose__ = "Part of MSc thesis Geo-Information Science at Wageningen University"
+* __status__ = "Production"
