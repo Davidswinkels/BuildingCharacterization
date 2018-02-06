@@ -17,5 +17,6 @@ Feel free to download and use these scripts.
 
 ## Document information
 __author__ = "David Swinkels"
-__email__ = "davidswinkelss@gmail.com"
+__github__ = "davidswinkels"
+__purpose__ = "Part of MSc thesis Geo-Information Science at Wageningen University"
 __status__ = "Production"
