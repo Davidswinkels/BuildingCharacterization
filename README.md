@@ -11,7 +11,7 @@ A dataset of buildings, the BAG ([viewer](https://bagviewer.kadaster.nl/lvbag/ba
 
 *retrain_adj.py*: Re-training a convolutional neural network with premade training, validation and test datasets and to give more outcome statistics. Script was modified fromn [image retraining script](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/image_retraining/retrain.py) by Tensorflow.
 
-*create_backup.py*: A script that makes a back-up of reports and scripts to a USB-stick.
+*create_backup.py*: A script that back-ups reports and scripts on a USB-stick.
 
 Feel free to download and use these scripts.
 
