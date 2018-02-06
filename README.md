@@ -1,5 +1,5 @@
-# BuildingClassification
-This repository holds scripts to process building classes and predict building functions based on streetview images by finetuning a tensorflow convolutional neural network.
+# BuildingCharacterization
+This repository holds scripts to process building functions and predict building functions based on streetview images by finetuning a tensorflow convolutional neural network.
 
 # How to build a building classifier?
 
