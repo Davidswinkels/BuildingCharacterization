@@ -3,7 +3,7 @@ This repository holds scripts to process building functions and predict building
 
 # How to build a building classifier?
 
-A dataset of buildings, the BAG ([data viewer](https://bagviewer.kadaster.nl/lvbag/bag-viewer/index.html#?geometry.x=121736.29375&geometry.y=487599.39169571&zoomlevel=4) | [get data via WFS](https://geodata.nationaalgeoregister.nl/bag/wfs?request=GetCapabilities), was used to derive all building centroids and functions in Amsterdam.
+A dataset of buildings, the BAG ([data viewer](https://bagviewer.kadaster.nl/lvbag/bag-viewer/index.html#?geometry.x=121736.29375&geometry.y=487599.39169571&zoomlevel=4) | [get data via WFS](https://geodata.nationaalgeoregister.nl/bag/wfs?request=GetCapabilities)), was used to derive all building centroids and functions in Amsterdam.
 
 __concatenate_building_functions.Rmd__: The building functions were concatenated from multiple text entries to multi-label numerical classes. Functions for buildings are residential, meeting, industry, office, accomodation, education, shop and other.
 
