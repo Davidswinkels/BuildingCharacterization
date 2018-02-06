@@ -1,3 +1,10 @@
+#!/usr/bin/env python2
+## Document information
+__author__ = "David Swinkels"
+__github__ = "davidswinkels"
+__purpose__ = "Part of MSc thesis Geo-Information Science at Wageningen University"
+__status__ = "Production"
+
 ## Load modules
 import os, sys, shutil
 import pandas

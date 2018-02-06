@@ -1,14 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
+## Document information
+__author__ = "David Swinkels"
+__github__ = "davidswinkels"
+__purpose__ = "Part of MSc thesis Geo-Information Science at Wageningen University"
+__status__ = "Production"
 
 ## Import functions here
 import os, os.path
 import zipfile
 from datetime import datetime
-
-## Document information
-__author__ = "David Swinkels"
-__email__ = "davidswinkelss@gmail.com"
-__status__ = "Production"
 
 ## This function check current date and its add to filename
 dateTime = str(datetime.now())

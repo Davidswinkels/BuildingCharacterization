@@ -1,7 +1,10 @@
 ---
-title: "ConcatenateFunctionBuildingAddresses"
-author: "Swinkels"
+title: "Concatenate Building Functions"
+author: "David Swinkels"
 date: "October 6, 2017"
+github: "David Swinkels"
+purpose: "Part of MSc thesis Geo-Information Science at Wageningen University"
+status: "Production"
 output: html_document
 ---
 
