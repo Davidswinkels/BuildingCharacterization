@@ -1,0 +1,80 @@
+---
+title: "ConcatenateFunctionBuildingAddresses"
+author: "Swinkels"
+date: "October 6, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(scipen=999)
+```
+
+```{r read}
+Buildings <- read.csv2(file = "D:/Workspace/ExtraData/AddressBuildingAmsterdam.csv", sep = ",")
+# str(Buildings)
+
+dim(Buildings)
+# 
+# head(Buildings)
+# 
+as.numeric(levels(Buildings$BuildingID))[Buildings$BuildingID]
+# 
+head(Buildings)
+tail(Buildings)
+```
+
+```{r concatenateAllLandUse}
+result <- aggregate(Gebruiksdo ~ BuildingID, data = Buildings, paste, collapse = ",")
+
+namescolumns <- c("Residential", "Meeting", "Cell", "Healthcare", "Industry", "Office", "Accommodation", "Education", "Sport", "Shop", "Other")
+
+for (name in namescolumns){
+  result[,name] <- 0
+}
+
+str(result)
+result$Residential[(grepl("woonfunctie", result$Gebruiksdo))] <- 1
+result$Meeting[(grepl("bijeenkomstfunctie", result$Gebruiksdo))] <- 1
+result$Cell[(grepl("celfunctie", result$Gebruiksdo))] <- 1
+result$Healthcare[(grepl("gezondheidszorgfunctie", result$Gebruiksdo))] <- 1
+result$Industry[(grepl("industriefunctie", result$Gebruiksdo))] <- 1
+result$Office[(grepl("kantoorfunctie", result$Gebruiksdo))] <- 1
+result$Accommodation[(grepl("logiesfunctie", result$Gebruiksdo))] <- 1
+result$Education[(grepl("onderwijsfunctie", result$Gebruiksdo))] <- 1
+result$Sport[(grepl("sportfunctie", result$Gebruiksdo))] <- 1
+result$Shop[(grepl("winkelfunctie", result$Gebruiksdo))] <- 1
+result$Other[(grepl("overige gebruiksfunctie", result$Gebruiksdo))] <- 1
+
+result$BuildingID <- as.character(result$BuildingID)
+
+write.csv(result, file = "D:/Workspace/ExtraData/AddressBuildingAmsterdamConcatenated.csv")
+```
+
+```{r concatenateMultiLandUse}
+resultAdjLandUse <- aggregate(Gebruiksdo ~ BuildingID, data = Buildings, paste, collapse = ",")
+
+namescolumns <- c("Residential", "Meeting", "Healthcare", "Industry", "Office", "Accommodation", "Education", "Sport", "Shop", "Other")
+for (name in namescolumns){
+  resultAdjLandUse[,name] <- 0
+}
+
+str(resultAdjLandUse)
+resultAdjLandUse$Residential[(grepl("woonfunctie", resultAdjLandUse$Gebruiksdo))] <- 1
+resultAdjLandUse$Meeting[(grepl("bijeenkomstfunctie", resultAdjLandUse$Gebruiksdo))] <- 1
+resultAdjLandUse$Healthcare[(grepl("gezondheidszorgfunctie", resultAdjLandUse$Gebruiksdo))] <- 1
+resultAdjLandUse$Industry[(grepl("industriefunctie", resultAdjLandUse$Gebruiksdo))] <- 1
+resultAdjLandUse$Office[(grepl("kantoorfunctie", resultAdjLandUse$Gebruiksdo))] <- 1
+resultAdjLandUse$Accommodation[(grepl("logiesfunctie", resultAdjLandUse$Gebruiksdo))] <- 1
+resultAdjLandUse$Education[(grepl("onderwijsfunctie", resultAdjLandUse$Gebruiksdo))] <- 1
+resultAdjLandUse$Sport[(grepl("sportfunctie", resultAdjLandUse$Gebruiksdo))] <- 1
+resultAdjLandUse$Shop[(grepl("winkelfunctie", resultAdjLandUse$Gebruiksdo))] <- 1
+resultAdjLandUse$Other[(grepl("overige gebruiksfunctie", resultAdjLandUse$Gebruiksdo))] <- 1
+
+
+resultAdjLandUse$BuildingID <- as.character(resultAdjLandUse$BuildingID)
+
+write.csv(resultAdjLandUse, file = "D:/Workspace/ExtraData/AddressBuildingAmsterdamConcatenatedAdjLandUse.csv")
+```
+
+
