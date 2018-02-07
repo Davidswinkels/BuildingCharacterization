@@ -7,7 +7,7 @@ A dataset of buildings, the BAG ([data viewer](https://bagviewer.kadaster.nl/lvb
 
 __concatenate_building_functions.Rmd__: The building functions were concatenated from multiple text entries to multi-label numerical classes. Functions for buildings are residential, meeting, industry, office, accomodation, education, shop and other.
 
-__download_streetview_images.py__: This script still has to be added.
+__download_streetview_images.py__: This script finds streetview images for a list of coordinates and stores images, metadata and information on download proces. Input list of coordinates is retrieved from a .csv file in ./input folder and output information (metadata, images, download process information) is stored in ./data repository.
 
 __create_distribution_images.py__: After having the data in the correct format, a random distribution of buildings is appointed to training (60%), validation (20%) and testing (20%) categories. The random distribution is made so that buildings in the same neighbourhood do not get in separate categories. Otherwise training and testing might be biased, because two identical buildings in the same street can both be in training and testing dataset.
 
