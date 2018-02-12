@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-
+## Import libraries
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -17,6 +17,7 @@ import tarfile
 import imghdr
 
 import numpy as np
+import pandas as pd
 from six.moves import urllib
 import tensorflow as tf
 
@@ -895,8 +896,11 @@ def add_jpeg_decoding(input_width, input_height, input_depth, input_mean,
   mul_image = tf.multiply(offset_image, 1.0 / input_std)
   return jpeg_data, mul_image
 
+def days_hours_minutes_seconds(td):
+  return td.days, td.seconds//3600, (td.seconds//60)%60, td.seconds%60
 
 def main(_):
+  start_time = datetime.now()
   # Needed to make sure the logging output is visible.
   # See https://github.com/tensorflow/tensorflow/issues/3047
   tf.logging.set_verbosity(tf.logging.INFO)
@@ -1054,8 +1058,39 @@ def main(_):
         feed_dict={bottleneck_input: test_bottlenecks,
                    ground_truth_input: test_ground_truth})
     tf.logging.info('Final test accuracy = %.1f%% (N=%d)' %
-                    (test_accuracy * 100, len(test_bottlenecks)))
+        (test_accuracy * 100, len(test_bottlenecks)))
+    test_ground_truth_pd = pd.Series(test_ground_truth, name = "Actual")
+    test_predictions_pd = pd.Series(predictions, name="Predicted")
+    conf_matrix = pd.crosstab(test_ground_truth_pd,
+        test_predictions_pd, rownames=['Actual'], colnames=['Predicted'], margins=True)
+    print "Confusion matrix /n", conf_matrix
 
+    proport_correct = (float(conf_matrix[0][0]) + float(conf_matrix[1][1])) /
+        float(conf_matrix.at[('All','All')])
+    prob_resid = ((float(conf_matrix[0][0]) + float(conf_matrix[1][0])) /
+        float(conf_matrix.at[('All','All')])) *
+        ((float(conf_matrix[0][0]) + float(conf_matrix[0][1])) /
+        float(conf_matrix.at[('All','All')]))
+    prob_non_resid = ((float(conf_matrix[0][1]) + float(conf_matrix[1][1])) /
+        float(conf_matrix.at[('All','All')])) * ((float(conf_matrix[1][0]) +
+        float(conf_matrix[1][1])) / float(conf_matrix.at[('All','All')]))
+    prob_all = prob_resid + prob_non_resid
+    kappa = (proport_correct - prob_all) / (1 - prob_all)
+    print "Kappa statistics:", kappa
+
+    precision = conf_matrix[1][1]- conf_matrix['All'][1]
+    recall = conf_matrix[1][1]- conf_matrix[1]['All']
+    print "Precision:", precision
+    print "Recall:", recall
+
+    comp_time = datetime.now() - start_time
+    print "Computation time in days, hours, minutes, seconds:", days_hours_minutes_seconds(comp_time)
+    print "Computation time in seconds:", comp_time.seconds
+    build_pred_error = []
+    for i, test_filename in enumerate(test_filenames):
+        if predictions[i] != test_ground_truth[i]:
+            match = re.search("_B([0-9]*)_", test_filename)
+            build_pred_error.append(match.group(1))
     if FLAGS.print_misclassified_test_images:
       tf.logging.info('=== MISCLASSIFIED TEST IMAGES ===')
       for i, test_filename in enumerate(test_filenames):
@@ -1076,7 +1111,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--image_dir',
       type=str,
-      default='',
+      default='/home/david/Documents/streetview-master/data_valid_resid_any/F30',
       help='Path to folders of labeled images.'
   )
   parser.add_argument(
