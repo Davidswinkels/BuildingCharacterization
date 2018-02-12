@@ -1049,22 +1049,16 @@ def main(_):
     # some new images we haven't used before.
     test_bottlenecks, test_ground_truth, test_filenames = (
         get_random_cached_bottlenecks(
-            sess, image_lists, FLAGS.test_batch_size, 'testing',
-            FLAGS.bottleneck_dir, FLAGS.image_dir, jpeg_data_tensor,
-            decoded_image_tensor, resized_image_tensor, bottleneck_tensor,
-            FLAGS.architecture))
-    test_accuracy, predictions = sess.run(
-        [evaluation_step, prediction],
-        feed_dict={bottleneck_input: test_bottlenecks,
-                   ground_truth_input: test_ground_truth})
-    tf.logging.info('Final test accuracy = %.1f%% (N=%d)' %
-        (test_accuracy * 100, len(test_bottlenecks)))
+        sess, image_lists, FLAGS.test_batch_size, 'testing',
+        FLAGS.bottleneck_dir, FLAGS.image_dir, jpeg_data_tensor,
+        decoded_image_tensor, resized_image_tensor, bottleneck_tensor,
+        FLAGS.architecture))
+    test_accuracy, predictions = sess.run([evaluation_step, prediction],feed_dict={bottleneck_input: test_bottlenecks,ground_truth_input: test_ground_truth})
+    tf.logging.info('Final test accuracy = %.1f%% (N=%d)' % (test_accuracy * 100, len(test_bottlenecks)))
     test_ground_truth_pd = pd.Series(test_ground_truth, name = "Actual")
     test_predictions_pd = pd.Series(predictions, name="Predicted")
-    conf_matrix = pd.crosstab(test_ground_truth_pd,
-        test_predictions_pd, rownames=['Actual'], colnames=['Predicted'], margins=True)
-    print "Confusion matrix /n", conf_matrix
-
+    conf_matrix = pd.crosstab(test_ground_truth_pd,test_predictions_pd, rownames=['Actual'], colnames=['Predicted'], margins=True)
+    print('Confusion matrix /n', conf_matrix)
     proport_correct = (float(conf_matrix[0][0]) + float(conf_matrix[1][1])) /
         float(conf_matrix.at[('All','All')])
     prob_resid = ((float(conf_matrix[0][0]) + float(conf_matrix[1][0])) /
@@ -1076,16 +1070,14 @@ def main(_):
         float(conf_matrix[1][1])) / float(conf_matrix.at[('All','All')]))
     prob_all = prob_resid + prob_non_resid
     kappa = (proport_correct - prob_all) / (1 - prob_all)
-    print "Kappa statistics:", kappa
-
+    print("Kappa statistics:", kappa)
     precision = conf_matrix[1][1]- conf_matrix['All'][1]
     recall = conf_matrix[1][1]- conf_matrix[1]['All']
-    print "Precision:", precision
-    print "Recall:", recall
-
+    print("Precision:", precision)
+    print("Recall:", recall)
     comp_time = datetime.now() - start_time
-    print "Computation time in days, hours, minutes, seconds:", days_hours_minutes_seconds(comp_time)
-    print "Computation time in seconds:", comp_time.seconds
+    print("Computation time in days, hours, minutes, seconds:", days_hours_minutes_seconds(comp_time))
+    print("Computation time in seconds:", comp_time.seconds)
     build_pred_error = []
     for i, test_filename in enumerate(test_filenames):
         if predictions[i] != test_ground_truth[i]:
