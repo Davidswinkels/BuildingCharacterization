@@ -1061,7 +1061,7 @@ def main(_):
     test_ground_truth_pd = pd.Series(test_ground_truth, name = "Actual")
     test_predictions_pd = pd.Series(predictions, name="Predicted")
     conf_matrix = pd.crosstab(test_ground_truth_pd,test_predictions_pd, rownames=['Actual'], colnames=['Predicted'], margins=True)
-    print('Confusion matrix /n', conf_matrix)
+    print('Confusion matrix \n' + conf_matrix)
     proport_correct = (float(conf_matrix[0][0]) + float(conf_matrix[1][1])) // (
         float(conf_matrix.at[('All','All')]))
     prob_resid = (((float(conf_matrix[0][0]) + float(conf_matrix[1][0])) // float(conf_matrix.at[('All','All')]))) * (
