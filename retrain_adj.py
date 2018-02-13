@@ -897,7 +897,7 @@ def add_jpeg_decoding(input_width, input_height, input_depth, input_mean,
   return jpeg_data, mul_image
 
 def days_hours_minutes_seconds(td):
-  return td.days, td.seconds//3600, (td.seconds//60)%60, td.seconds%60
+  return td.days, td.seconds/3600, (td.seconds/60)%60, td.seconds%60
 
 def main(_):
   start_time = datetime.now()
@@ -1056,23 +1056,25 @@ def main(_):
     test_accuracy, predictions = sess.run([evaluation_step, prediction],
         feed_dict={bottleneck_input: test_bottlenecks,
         ground_truth_input: test_ground_truth})
+    # Testing accuracy of predictions with statistics: 
+    # test accuracy, confusion matrix, kappa stats, precision, recall, computation time, wrongly predicted building ID
     tf.logging.info('Final test accuracy = %.1f%% (N=%d)' % (
         test_accuracy * 100, len(test_bottlenecks)))
     test_ground_truth_pd = pd.Series(test_ground_truth, name = "Actual")
     test_predictions_pd = pd.Series(predictions, name="Predicted")
     conf_matrix = pd.crosstab(test_ground_truth_pd,test_predictions_pd, rownames=['Actual'], colnames=['Predicted'], margins=True)
     print('Confusion matrix \n' + conf_matrix)
-    proport_correct = (float(conf_matrix[0][0]) + float(conf_matrix[1][1])) // (
+    proport_correct = (float(conf_matrix[0][0]) + float(conf_matrix[1][1])) / (
         float(conf_matrix.at[('All','All')]))
-    prob_resid = (((float(conf_matrix[0][0]) + float(conf_matrix[1][0])) // float(conf_matrix.at[('All','All')]))) * (
-        (float(conf_matrix[0][0]) + float(conf_matrix[0][1])) // float(conf_matrix.at[('All','All')]))
-    prob_non_resid = (((float(conf_matrix[0][1]) + float(conf_matrix[1][1])) // float(conf_matrix.at[('All','All')]))) * (
-        (float(conf_matrix[1][0]) + float(conf_matrix[1][1])) // float(conf_matrix.at[('All','All')]))
+    prob_resid = (((float(conf_matrix[0][0]) + float(conf_matrix[1][0])) / float(conf_matrix.at[('All','All')]))) * (
+        (float(conf_matrix[0][0]) + float(conf_matrix[0][1])) / float(conf_matrix.at[('All','All')]))
+    prob_non_resid = (((float(conf_matrix[0][1]) + float(conf_matrix[1][1])) / float(conf_matrix.at[('All','All')]))) * (
+        (float(conf_matrix[1][0]) + float(conf_matrix[1][1])) / float(conf_matrix.at[('All','All')]))
     prob_all = prob_resid + prob_non_resid
-    kappa = (proport_correct - prob_all) // (1 - prob_all)
+    kappa = (proport_correct - prob_all) / (1 - prob_all)
     print("Kappa statistics:", kappa)
-    precision = conf_matrix[1][1]- conf_matrix['All'][1]
-    recall = conf_matrix[1][1]- conf_matrix[1]['All']
+    precision = conf_matrix[0][0] / conf_matrix[0]['All']
+    recall = conf_matrix[0][0] / conf_matrix['All'][0]
     print("Precision:", precision)
     print("Recall:", recall)
     comp_time = datetime.now() - start_time
@@ -1103,7 +1105,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--image_dir',
       type=str,
-      default='/home/david/Documents/streetview-master/data_valid_resid_any/F30',
+      default='/home/david/Documents/streetview-master/data_valid_resid_any/F60',
       help='Path to folders of labeled images.'
   )
   parser.add_argument(
