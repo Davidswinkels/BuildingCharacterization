@@ -897,7 +897,7 @@ def add_jpeg_decoding(input_width, input_height, input_depth, input_mean,
   return jpeg_data, mul_image
 
 def days_hours_minutes_seconds(td):
-  return td.days, td.seconds/3600, (td.seconds/60)%60, td.seconds%60
+  return td.days, td.seconds//3600, (td.seconds//60)%60, td.seconds%60
 
 def main(_):
   start_time = datetime.now()
@@ -1106,7 +1106,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--image_dir',
       type=str,
-      default='/home/david/Documents/streetview-master/data_valid_resid_any/F60',
+      default='/home/david/Documents/streetview-master/data_valid_resid_any/F90',
       help='Path to folders of labeled images.'
   )
   parser.add_argument(
