@@ -1058,6 +1058,7 @@ def main(_):
         ground_truth_input: test_ground_truth})
     # Testing accuracy of predictions with statistics: 
     # test accuracy, confusion matrix, kappa stats, precision, recall, computation time, wrongly predicted building ID
+    print("Filepath:", FLAGS.image_dir)
     tf.logging.info('Final test accuracy = %.1f%% (N=%d)' % (
         test_accuracy * 100, len(test_bottlenecks)))
     test_ground_truth_pd = pd.Series(test_ground_truth, name = "Actual")
