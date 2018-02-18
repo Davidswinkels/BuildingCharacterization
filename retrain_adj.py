@@ -15,6 +15,7 @@ import re
 import sys
 import tarfile
 import imghdr
+import csv
 
 import numpy as np
 import pandas as pd
@@ -64,15 +65,18 @@ def load_image_lists(image_dir):
     training_images = []
     validation_images = []
     testing_images = []
+    error_jpg_list = []
     for sub_dir in ['training', 'validation', 'testing']:
         file_glob = os.path.join(image_dir, class_dir, sub_dir, '*.jpg')
         ## Check if file is correct jpg
         file_list = gfile.Glob(file_glob)
+
         for filepath in file_list:
             # check if file is type of JPEG File Interchange Format
      	    if imghdr.what(filepath) != 'jpeg':
                 file_list.remove(filepath)
-                print(filepath)
+                error_jpg_list.append(filepath)
+                print('WARNING: ' + filepath + ' does not have correct jpeg format')
         if sub_dir == 'training':
             training_images.extend(file_list)
             if not training_images:
@@ -97,7 +101,17 @@ def load_image_lists(image_dir):
             if len(testing_images) < 20:
                 tf.logging.warning(
                 'WARNING: Folder has less than 20 images, which may cause issues.')
- 
+
+    error_jpg_file_name = '/errorjpg_residential_F30_inception_v3_1.csv'
+    with open((FLAGS.log_dir + error_jpg_file_name), 'wb') as error_jpg_file:
+        wr = csv.writer(error_jpg_file, quoting=csv.QUOTE_ALL)
+        wr.writerow(['BuildingID', 'Filepath'])
+        for error_jpg_image in error_jpg_list:
+            # Regular expression to get BuildingID out of filepath
+            match = re.search("_B([0-9]*)_", error_jpg_image)
+            print(match)
+            # Write BuildingID and Filepath to csv file
+            wr.writerow([match.group(1), error_jpg_image])
     label_name = re.sub(r'[^a-z0-9]+', ' ', dir_name.lower())
     result[label_name] = {
         'dir': dir_name,
@@ -1091,22 +1105,27 @@ def main(_):
             match = re.search("_B([0-9]*)_", test_filename)
             build_pred_error.append(match.group(1))
     # Write out confusion matrix, outcome statistics and list of misclassified test images to file
-    result_dir = '/home/david/PycharmProjects/tensorflow_training/BuildingCharacterization/result'
     f_class = str(image_lists.keys()[0]) + '_'
     f_fov = str('F30') + '_'
     f_model = str(FLAGS.architecture) + '_'
     f_iteration = str(1)
     conf_file_name = '/conf_' + f_class + f_fov + f_model + f_iteration + '.csv'
-    conf_matrix.to_csv(result_dir + conf_file_name)
-    print('Confusion matrix' + conf_file_name + 'is stored at' + result_dir)
+    conf_matrix.to_csv(FLAGS.log_dir + conf_file_name)
+    print('Confusion matrix' + conf_file_name + 'is stored at' + FLAGS.log_dir)
     stats_file_name = '/stats_' + f_class + f_fov + f_model + f_iteration + '.csv'
-
-
-    print('Outcome statistics' + stats_file_name + 'is stored at' + result_dir)
+    with open((FLAGS.log_dir+stats_file_name), 'wb') as stats_file:
+        wr = csv.writer(stats_file, quoting=csv.QUOTE_ALL)
+        wr.writerow(['kappa','precision','recall','computation_time(seconds)','test_accuracy'])
+        row = [kappa,precision,recall,comp_time.seconds,test_accuracy*100]
+        wr.writerow(row)
+    print('Outcome statistics' + stats_file_name + 'is stored at' + FLAGS.log_dir)
     misclass_file_name = '/misclass_' + f_class + f_fov + f_model + f_iteration + '.csv'
-
-
-    print('Misclassified images' + misclass_file_name + 'is stored at' + result_dir)
+    with open((FLAGS.log_dir+misclass_file_name), 'wb') as misclass_file:
+        wr = csv.writer(misclass_file, quoting=csv.QUOTE_ALL)
+        wr.writerow(['BuildingID'])
+        for misclass_image in build_pred_error:
+            wr.writerow([misclass_image])
+    print('Misclassified images' + misclass_file_name + 'is stored at' + FLAGS.log_dir)
     if FLAGS.print_misclassified_test_images:
       tf.logging.info('=== MISCLASSIFIED TEST IMAGES ===')
       for i, test_filename in enumerate(test_filenames):
@@ -1129,6 +1148,12 @@ if __name__ == '__main__':
       type=str,
       default='/home/david/Documents/streetview-master/data_valid_resid_any/F90',
       help='Path to folders of labeled images.'
+  )
+  parser.add_argument(
+      '--log_dir',
+      type=str,
+      default='/home/david/PycharmProjects/tensorflow_training/BuildingCharacterization/log',
+      help='Path to folder of log: confusion matrix, errors, outcome statistics, missclassified images'
   )
   parser.add_argument(
       '--output_graph',
