@@ -69,8 +69,10 @@ def load_image_lists(image_dir):
         ## Check if file is correct jpg
         file_list = gfile.Glob(file_glob)
         for filepath in file_list:
+            # check if file is type of JPEG File Interchange Format
      	    if imghdr.what(filepath) != 'jpeg':
                 file_list.remove(filepath)
+                print(filepath)
         if sub_dir == 'training':
             training_images.extend(file_list)
             if not training_images:
@@ -900,7 +902,7 @@ def days_hours_minutes_seconds(td):
   return td.days, td.seconds//3600, (td.seconds//60)%60, td.seconds%60
 
 def main(_):
-  start_time = datetime.now()
+
   # Needed to make sure the logging output is visible.
   # See https://github.com/tensorflow/tensorflow/issues/3047
   tf.logging.set_verbosity(tf.logging.INFO)
@@ -916,6 +918,7 @@ def main(_):
 
   # Set up the pre-trained graph.
   maybe_download_and_extract(model_info['data_url'])
+  start_time = datetime.now()  # Save starting time after downloading model
   graph, bottleneck_tensor, resized_image_tensor = (
       create_model_graph(model_info))
 
@@ -1058,7 +1061,7 @@ def main(_):
         ground_truth_input: test_ground_truth})
     # Testing accuracy of predictions with statistics: 
     # test accuracy, confusion matrix, kappa stats, precision, recall, computation time, wrongly predicted building ID
-    print("Filepath:", FLAGS.image_dir)
+    print('Filepath:', FLAGS.image_dir)
     tf.logging.info('Final test accuracy = %.1f%% (N=%d)' % (
         test_accuracy * 100, len(test_bottlenecks)))
     test_ground_truth_pd = pd.Series(test_ground_truth, name = "Actual")
@@ -1074,19 +1077,36 @@ def main(_):
         (float(conf_matrix[1][0]) + float(conf_matrix[1][1])) / float(conf_matrix.at[('All','All')]))
     prob_all = prob_resid + prob_non_resid
     kappa = (proport_correct - prob_all) / (1 - prob_all)
-    print("Kappa statistics:", kappa)
+    print('Kappa statistics:', kappa)
     precision = conf_matrix[0][0] / conf_matrix[0]['All']
     recall = conf_matrix[0][0] / conf_matrix['All'][0]
-    print("Precision:", precision)
-    print("Recall:", recall)
+    print('Precision:', precision)
+    print('Recall:', recall)
     comp_time = datetime.now() - start_time
-    print("Computation time in days, hours, minutes, seconds:", days_hours_minutes_seconds(comp_time))
-    print("Computation time in seconds:", comp_time.seconds)
+    print('Computation time in days, hours, minutes, seconds:', days_hours_minutes_seconds(comp_time))
+    print('Computation time in seconds:', comp_time.seconds)
     build_pred_error = []
     for i, test_filename in enumerate(test_filenames):
         if predictions[i] != test_ground_truth[i]:
             match = re.search("_B([0-9]*)_", test_filename)
             build_pred_error.append(match.group(1))
+    # Write out confusion matrix, outcome statistics and list of misclassified test images to file
+    result_dir = '/home/david/PycharmProjects/tensorflow_training/BuildingCharacterization/result'
+    f_class = str(image_lists.keys()[0]) + '_'
+    f_fov = str('F30') + '_'
+    f_model = str(FLAGS.architecture) + '_'
+    f_iteration = str(1)
+    conf_file_name = '/conf_' + f_class + f_fov + f_model + f_iteration + '.csv'
+    conf_matrix.to_csv(result_dir + conf_file_name)
+    print('Confusion matrix' + conf_file_name + 'is stored at' + result_dir)
+    stats_file_name = '/stats_' + f_class + f_fov + f_model + f_iteration + '.csv'
+
+
+    print('Outcome statistics' + stats_file_name + 'is stored at' + result_dir)
+    misclass_file_name = '/misclass_' + f_class + f_fov + f_model + f_iteration + '.csv'
+
+
+    print('Misclassified images' + misclass_file_name + 'is stored at' + result_dir)
     if FLAGS.print_misclassified_test_images:
       tf.logging.info('=== MISCLASSIFIED TEST IMAGES ===')
       for i, test_filename in enumerate(test_filenames):
