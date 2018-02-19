@@ -10,6 +10,8 @@ import imghdr
 import os
 import warnings
 import glob
+import csv
+import re
 
 def check_image_lists(image_dir, logging = True, log_dir = './log', log_file_name = 'errorlog_images.csv'):
   """Check if jpg files are correct.
@@ -40,19 +42,20 @@ def check_image_lists(image_dir, logging = True, log_dir = './log', log_file_nam
     with open((log_dir + '/' + log_file_name), 'wb') as error_jpg_file:
       wr = csv.writer(error_jpg_file, quoting=csv.QUOTE_ALL)
       wr.writerow(['BuildingID', 'Filepath'])
-        for error_jpg_image in error_jpg_list:
-          # Regular expression to get BuildingID out of filepath
-          match = re.search("_B([0-9]*)_", error_jpg_image)
-          print(match.group(1))
-          # Write BuildingID and Filepath to csv file
-          wr.writerow([match.group(1), error_jpg_image])
+      for error_jpg_image in error_jpg_list:
+        # Regular expression to get BuildingID out of filepath
+        match = re.search("_B([0-9]*)_", error_jpg_image)
+        print(match.group(1))
+        # Write BuildingID and Filepath to csv file
+        wr.writerow([match.group(1), error_jpg_image])
 
 base_image_dir = '/home/david/Documents/streetview-master/data_valid_resid_any'
 for fov in ['F30', 'F60', 'F90', 'F30_60_90']:
   for image_class in ['residential', 'non_residential']:
     for sub_dir in ['training', 'validation', 'testing']:
       full_image_dir = base_image_dir + '/' + fov + '/' + image_class + '/' + sub_dir
+      print("Checking image directory:", full_image_dir)
       check_image_lists(image_dir = (full_image_dir),
             logging = True,
-            log_dir = '/home/david/PycharmProjects/tensorflow_training/BuildingCharacterization/log',
+            log_dir = '/home/david/PycharmProjects/tensorflow_training/BuildingCharacterization/log/error_jpg',
             log_file_name = 'errorjpg_' + image_class + '_' + fov + '_' + sub_dir + '.csv')
