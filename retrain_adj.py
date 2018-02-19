@@ -37,7 +37,7 @@ FLAGS = None
 MAX_NUM_IMAGES_PER_CLASS = 2 ** 27 - 1  # ~134M
 
 
-def load_image_lists(image_dir):
+def load_image_lists(image_dir, f_name):
   """Builds a list of training images from the file system.
 
   Analyzes the sub folders in the image directory, splits them into stable
@@ -102,14 +102,13 @@ def load_image_lists(image_dir):
                 tf.logging.warning(
                 'WARNING: Folder has less than 20 images, which may cause issues.')
 
-    error_jpg_file_name = '/errorjpg_residential_F30_inception_v3_1.csv'
+    error_jpg_file_name = '/errorjpg_' + f_name
     with open((FLAGS.log_dir + error_jpg_file_name), 'wb') as error_jpg_file:
         wr = csv.writer(error_jpg_file, quoting=csv.QUOTE_ALL)
         wr.writerow(['BuildingID', 'Filepath'])
         for error_jpg_image in error_jpg_list:
             # Regular expression to get BuildingID out of filepath
             match = re.search("_B([0-9]*)_", error_jpg_image)
-            print(match)
             # Write BuildingID and Filepath to csv file
             wr.writerow([match.group(1), error_jpg_image])
     label_name = re.sub(r'[^a-z0-9]+', ' ', dir_name.lower())
@@ -936,15 +935,25 @@ def main(_):
   graph, bottleneck_tensor, resized_image_tensor = (
       create_model_graph(model_info))
 
+  # Set up naming scheme for output .csv files
+  f_class = 'residential_'
+  f_fov = fov + '_'
+  f_model = str(FLAGS.architecture) + '_'
+  f_iteration = str(1)
+  f_name = f_class + f_fov + f_model + f_iteration + '.csv'
+
+  # Set up image_dir
+  image_dir = FLAGS.image_dir + '/' + fov
+
   # Look at the folder structure, and create lists of all the images.
-  image_lists = load_image_lists(FLAGS.image_dir)
+  image_lists = load_image_lists(image_dir, f_name)
   class_count = len(image_lists.keys())
   if class_count == 0:
-    tf.logging.error('No valid folders of images found at ' + FLAGS.image_dir)
+    tf.logging.error('No valid folders of images found at ' + image_dir)
     return -1
   if class_count == 1:
     tf.logging.error('Only one valid folder of images found at ' +
-                     FLAGS.image_dir +
+                     image_dir +
                      ' - multiple classes are needed for classification.')
     return -1
 
@@ -971,7 +980,7 @@ def main(_):
     else:
       # We'll make sure we've calculated the 'bottleneck' image summaries and
       # cached them on disk.
-      cache_bottlenecks(sess, image_lists, FLAGS.image_dir,
+      cache_bottlenecks(sess, image_lists, image_dir,
                         FLAGS.bottleneck_dir, jpeg_data_tensor,
                         decoded_image_tensor, resized_image_tensor,
                         bottleneck_tensor, FLAGS.architecture)
@@ -1006,13 +1015,13 @@ def main(_):
         (train_bottlenecks,
          train_ground_truth) = get_random_distorted_bottlenecks(
              sess, image_lists, FLAGS.train_batch_size, 'training',
-             FLAGS.image_dir, distorted_jpeg_data_tensor,
+             image_dir, distorted_jpeg_data_tensor,
              distorted_image_tensor, resized_image_tensor, bottleneck_tensor)
       else:
         (train_bottlenecks,
          train_ground_truth, _) = get_random_cached_bottlenecks(
              sess, image_lists, FLAGS.train_batch_size, 'training',
-             FLAGS.bottleneck_dir, FLAGS.image_dir, jpeg_data_tensor,
+             FLAGS.bottleneck_dir, image_dir, jpeg_data_tensor,
              decoded_image_tensor, resized_image_tensor, bottleneck_tensor,
              FLAGS.architecture)
       # Feed the bottlenecks and ground truth into the graph, and run a training
@@ -1037,7 +1046,7 @@ def main(_):
         validation_bottlenecks, validation_ground_truth, _ = (
             get_random_cached_bottlenecks(
                 sess, image_lists, FLAGS.validation_batch_size, 'validation',
-                FLAGS.bottleneck_dir, FLAGS.image_dir, jpeg_data_tensor,
+                FLAGS.bottleneck_dir, image_dir, jpeg_data_tensor,
                 decoded_image_tensor, resized_image_tensor, bottleneck_tensor,
                 FLAGS.architecture))
         # Run a validation step and capture training summaries for TensorBoard
@@ -1067,15 +1076,16 @@ def main(_):
     test_bottlenecks, test_ground_truth, test_filenames = (
         get_random_cached_bottlenecks(
         sess, image_lists, FLAGS.test_batch_size, 'testing',
-        FLAGS.bottleneck_dir, FLAGS.image_dir, jpeg_data_tensor,
+        FLAGS.bottleneck_dir, image_dir, jpeg_data_tensor,
         decoded_image_tensor, resized_image_tensor, bottleneck_tensor,
         FLAGS.architecture))
     test_accuracy, predictions = sess.run([evaluation_step, prediction],
         feed_dict={bottleneck_input: test_bottlenecks,
         ground_truth_input: test_ground_truth})
+
     # Testing accuracy of predictions with statistics: 
     # test accuracy, confusion matrix, kappa stats, precision, recall, computation time, wrongly predicted building ID
-    print('Filepath:', FLAGS.image_dir)
+    print('Filepath:', image_dir)
     tf.logging.info('Final test accuracy = %.1f%% (N=%d)' % (
         test_accuracy * 100, len(test_bottlenecks)))
     test_ground_truth_pd = pd.Series(test_ground_truth, name = "Actual")
@@ -1104,28 +1114,25 @@ def main(_):
         if predictions[i] != test_ground_truth[i]:
             match = re.search("_B([0-9]*)_", test_filename)
             build_pred_error.append(match.group(1))
+
     # Write out confusion matrix, outcome statistics and list of misclassified test images to file
-    f_class = str(image_lists.keys()[0]) + '_'
-    f_fov = str('F30') + '_'
-    f_model = str(FLAGS.architecture) + '_'
-    f_iteration = str(1)
-    conf_file_name = '/conf_' + f_class + f_fov + f_model + f_iteration + '.csv'
+    conf_file_name = '/conf_' + f_name
     conf_matrix.to_csv(FLAGS.log_dir + conf_file_name)
-    print('Confusion matrix' + conf_file_name + 'is stored at' + FLAGS.log_dir)
-    stats_file_name = '/stats_' + f_class + f_fov + f_model + f_iteration + '.csv'
+    print('Confusion matrix file: ' + conf_file_name + ' is stored at ' + FLAGS.log_dir)
+    stats_file_name = '/stats_' + f_name
     with open((FLAGS.log_dir+stats_file_name), 'wb') as stats_file:
         wr = csv.writer(stats_file, quoting=csv.QUOTE_ALL)
         wr.writerow(['kappa','precision','recall','computation_time(seconds)','test_accuracy'])
         row = [kappa,precision,recall,comp_time.seconds,test_accuracy*100]
         wr.writerow(row)
-    print('Outcome statistics' + stats_file_name + 'is stored at' + FLAGS.log_dir)
-    misclass_file_name = '/misclass_' + f_class + f_fov + f_model + f_iteration + '.csv'
+    print('Outcome statistics file: ' + stats_file_name + ' is stored at ' + FLAGS.log_dir)
+    misclass_file_name = '/misclass_' + f_name
     with open((FLAGS.log_dir+misclass_file_name), 'wb') as misclass_file:
         wr = csv.writer(misclass_file, quoting=csv.QUOTE_ALL)
         wr.writerow(['BuildingID'])
         for misclass_image in build_pred_error:
             wr.writerow([misclass_image])
-    print('Misclassified images' + misclass_file_name + 'is stored at' + FLAGS.log_dir)
+    print('Misclassified images file: ' + misclass_file_name + ' is stored at ' + FLAGS.log_dir)
     if FLAGS.print_misclassified_test_images:
       tf.logging.info('=== MISCLASSIFIED TEST IMAGES ===')
       for i, test_filename in enumerate(test_filenames):
@@ -1146,7 +1153,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--image_dir',
       type=str,
-      default='/home/david/Documents/streetview-master/data_valid_resid_any/F90',
+      default='/home/david/Documents/streetview-master/data_valid_resid_any',
       help='Path to folders of labeled images.'
   )
   parser.add_argument(
@@ -1318,4 +1325,11 @@ if __name__ == '__main__':
       for more information on Mobilenet.\
       """)
   FLAGS, unparsed = parser.parse_known_args()
-  tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+
+  architectures = ['inception_v3','mobilenet_1.0_224']
+  fovs = ['F30','F60']
+  for fov in fovs:
+    for architecture in architectures:
+        print("CNN model: ", architecture, fov)
+        FLAGS.architecture = architecture
+        tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
