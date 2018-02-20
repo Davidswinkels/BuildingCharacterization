@@ -1329,7 +1329,9 @@ if __name__ == '__main__':
   architectures = ['inception_v3','mobilenet_1.0_224']
   fovs = ['F30','F60']
   for fov in fovs:
-    for architecture in architectures:
-        print("CNN model: ", architecture, fov)
-        FLAGS.architecture = architecture
-        tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+    print("CNN model: ", architectures[0], fov)
+    FLAGS.architecture = architectures[0]
+    tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+    print("CNN model: ", architectures[1], fov)
+    FLAGS.architecture = architectures[1]
+    tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
