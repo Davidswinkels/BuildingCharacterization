@@ -220,20 +220,20 @@ def create_image_lists(image_dir = image_dir, building_class = 'Residentia',
   for neigh in training_neigh:
     # Load valid data of specific building class
     rows_neigh = (images_valid['BU_CODE'] == neigh)
-    images_neigh = building_points.loc[rows_neigh, :]
+    images_neigh = images_valid.loc[rows_neigh,]
     image_dir = base_image_dir + '/' + neigh[-4:]
     for idx, image in images_neigh.iterrows():
       if len(fov) == 3:
         filename = "N" + image['BU_CODE'] + "_B" + str(image['BuildingID']) + "_P" \
                        + image['pano_id'] + "_" + fov + "_A00.jpg"
-        filepaths = image_dir + "/" + filename
+        filepaths = [image_dir + "/" + filename]
       if len(fov) == 9:
         filepaths = []
         for fov2 in ['F30','F60','F90']:
           filename = "N" + image['BU_CODE'] + "_B" + str(image['BuildingID']) + "_P" \
            + image['pano_id'] + "_" + fov2 + "_A00.jpg"
           filepath = image_dir + "/" + filename
-          filepaths += filepath
+          filepaths += [filepath]
       if image[building_class] == 1:
         class_training_images += filepaths
       if image[building_class] == 0:
@@ -243,20 +243,20 @@ def create_image_lists(image_dir = image_dir, building_class = 'Residentia',
   for neigh in validation_neigh:
     # Load valid data of specific building class
     rows_neigh = (images_valid['BU_CODE'] == neigh)
-    images_neigh = building_points.loc[rows_neigh, :]
+    images_neigh = images_valid.loc[rows_neigh,]
     image_dir = base_image_dir + '/' + neigh[-4:]
     for idx, image in images_neigh.iterrows():
       if len(fov) == 3:
         filename = "N" + image['BU_CODE'] + "_B" + str(image['BuildingID']) + "_P" \
                    + image['pano_id'] + "_" + fov + "_A00.jpg"
-        filepaths = image_dir + "/" + filename
+        filepaths = [image_dir + "/" + filename]
       if len(fov) == 9:
         filepaths = []
         for fov2 in ['F30', 'F60', 'F90']:
           filename = "N" + image['BU_CODE'] + "_B" + str(image['BuildingID']) + "_P" \
                      + image['pano_id'] + "_" + fov2 + "_A00.jpg"
           filepath = image_dir + "/" + filename
-          filepaths += filepath
+          filepaths += [filepath]
       if image[building_class] == 1:
         class_validation_images += filepaths
       if image[building_class] == 0:
@@ -266,20 +266,20 @@ def create_image_lists(image_dir = image_dir, building_class = 'Residentia',
   for neigh in testing_neigh:
     # Load valid data of specific building class
     rows_neigh = (images_valid['BU_CODE'] == neigh)
-    images_neigh = building_points.loc[rows_neigh, :]
+    images_neigh = images_valid.loc[rows_neigh,]
     image_dir = base_image_dir + '/' + neigh[-4:]
     for idx, image in images_neigh.iterrows():
       if len(fov) == 3:
         filename = "N" + image['BU_CODE'] + "_B" + str(image['BuildingID']) + "_P" \
                    + image['pano_id'] + "_" + fov + "_A00.jpg"
-        filepaths = image_dir + "/" + filename
+        filepaths = [image_dir + "/" + filename]
       if len(fov) == 9:
         filepaths = []
         for fov2 in ['F30', 'F60', 'F90']:
           filename = "N" + image['BU_CODE'] + "_B" + str(image['BuildingID']) + "_P" \
                      + image['pano_id'] + "_" + fov2 + "_A00.jpg"
           filepath = image_dir + "/" + filename
-          filepaths += filepath
+          filepaths += [filepath]
       if image[building_class] == 1:
         class_testing_images += filepaths
       if image[building_class] == 0:
