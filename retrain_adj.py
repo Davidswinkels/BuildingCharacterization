@@ -285,7 +285,7 @@ def create_image_lists(image_dir = image_dir, building_class = 'Residentia',
       if image[building_class] == 0:
         non_class_testing_images += filepaths
   class_label_name = re.sub(r'[^a-z0-9]+', ' ', building_class.lower())
-  non_class_label_name = "non-" + class_label_name
+  non_class_label_name = "non_" + class_label_name
   result = {}
   result[class_label_name] = {
     'dir': class_label_name,

@@ -178,7 +178,6 @@ for neigh in training_neigh:
                    + image['pano_id'] + "_" + fov2 + "_A00.jpg"
         filepath = image_dir + "/" + filename
         filepaths += [filepath]
-    print(filepaths)
     if image[building_class] == 1:
       class_training_images += filepaths
     if image[building_class] == 0:
@@ -231,7 +230,7 @@ for neigh in testing_neigh:
       non_class_testing_images += filepaths
 
 class_label_name = re.sub(r'[^a-z0-9]+', ' ', building_class.lower())
-non_class_label_name = "non-" + class_label_name
+non_class_label_name = "non_" + class_label_name
 result = {}
 result[class_label_name] = {
 'dir': class_label_name,
@@ -245,4 +244,6 @@ result[non_class_label_name] = {
 'testing': non_class_testing_images,
 'validation': non_class_validation_images
 }
+
+
 print(result)
