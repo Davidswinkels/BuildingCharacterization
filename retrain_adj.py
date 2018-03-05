@@ -45,18 +45,18 @@ building_points = pd.read_csv(input_file)
 
 building_classes = ['Residentia', 'Meeting', 'Healthcare', 'Industry', 'Office',
                     'Accommodat', 'Education', 'Sport', 'Shop', 'Other']
-non_building_classes = ['Non-Residentia', 'Non-Meeting', 'Non-Healthcare',
-                        'Non-Industry', 'Non-Office', 'Non-Accommodat',
-                        'Non-Education', 'Non-Sport', 'Non-Shop', 'Non-Other']
 
-def create_image_lists(image_dir = image_dir, building_class = 'Residentia',
-                       fov = 'F30', iteration=0):
+building_class = building_classes[0] # Get residential class for now
+iteration = 0
+
+def create_image_lists(image_dir = image_dir, building_class = building_class,
+                       fov = 'F30', iteration=iteration):
   """Builds a list of training, validation and testing images from the file system.
   Analyzes the sub folders in the image directory, splits them into stable
   training, testing, and validation sets, and returns a data structure
   describing the lists of images for each label and their paths.
   Args:
-    image_dir: String path to a folder containing subfolders of images.
+    image_dir: String path to a folder containing subfolders osf images.
     building_class: String name of building class (one of 10 building classes: 'Residentia', 'Meeting', 'Healthcare', 'Industry', 'Office',
                     'Accommodat', 'Education', 'Sport', 'Shop', 'Other')
     fov: String name of field of view (one of four fovs: 'F30', 'F60', 'F90', 'F30_60_90')
@@ -286,15 +286,20 @@ def create_image_lists(image_dir = image_dir, building_class = 'Residentia',
         non_class_testing_images += filepaths
   class_label_name = re.sub(r'[^a-z0-9]+', ' ', building_class.lower())
   non_class_label_name = "non_" + class_label_name
+  # make directory to store bottlenecks
+  class_bottleneck_dir = base_image_dir + "/bottleneck/" + class_label_name
+  non_class_bottleneck_dir = base_image_dir + "/bottleneck/" + non_class_label_name
+  ensure_dir_exists(class_bottleneck_dir)
+  ensure_dir_exists(non_class_bottleneck_dir)
   result = {}
   result[class_label_name] = {
-    'dir': class_label_name,
+    'dir': class_bottleneck_dir,
     'training': class_training_images,
     'testing': class_testing_images,
     'validation': class_validation_images
   }
   result[non_class_label_name] = {
-    'dir': non_class_label_name,
+    'dir': non_class_bottleneck_dir,
     'training': non_class_training_images,
     'testing': non_class_testing_images,
     'validation': non_class_validation_images
@@ -415,7 +420,7 @@ def get_image_path(image_lists, label_name, index, image_dir, category):
     tf.logging.fatal('Label %s has no images in the category %s.',
                      label_name, category)
   mod_index = index % len(category_list)
-  base_name = category_list[mod_index]
+  full_path = category_list[mod_index]
   sub_dir = label_lists['dir']
   full_path = os.path.join(image_dir, sub_dir, base_name)
   return full_path
@@ -535,9 +540,6 @@ def ensure_dir_exists(dir_name):
   """
   if not os.path.exists(dir_name):
     os.makedirs(dir_name)
-
-
-bottleneck_path_2_bottleneck_values = {}
 
 
 def create_bottleneck_file(bottleneck_path, image_lists, label_name, index,
@@ -1203,10 +1205,10 @@ def main(_):
       create_model_graph(model_info))
 
   # Set up naming scheme for output .csv files
-  f_class = 'residential_'
+  f_class = building_class + '_'
   f_fov = fov + '_'
   f_model = str(FLAGS.architecture) + '_'
-  f_iteration = str(1)
+  f_iteration = str(iteration)
   f_name = f_class + f_fov + f_model + f_iteration + '.csv'
 
   # Set up image_dir
@@ -1420,7 +1422,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--image_dir',
       type=str,
-      default='/home/david/Documents/streetview-master/data_valid_resid_any',
+      default='/home/david/Documents/streetview-master/data',
       help='Path to folders of labeled images.'
   )
   parser.add_argument(
