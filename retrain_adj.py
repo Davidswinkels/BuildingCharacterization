@@ -34,31 +34,21 @@ FLAGS = None
 # need to update these to reflect the values in the network you're using.
 MAX_NUM_IMAGES_PER_CLASS = 2 ** 27 - 1  # ~134M
 
-
-image_dir = '/home/david/Documents/streetview-master/data'
-
-# Set parameters
+# Load data from csv database with all buildings
 input_file = "./input/BuildingPointsValidImages.csv"
-
-# Load data
 building_points = pd.read_csv(input_file)
 
-building_classes = ['Residentia', 'Meeting', 'Healthcare', 'Industry', 'Office',
-                    'Accommodat', 'Education', 'Sport', 'Shop', 'Other']
-
-building_class = building_classes[0] # Get residential class for now
-iteration = 0
-
-def create_image_lists(image_dir = image_dir, building_class = building_class,
+def create_image_lists(image_dir, building_class = building_class,
                        fov = 'F30', iteration=iteration):
   """Builds a list of training, validation and testing images from the file system.
   Analyzes the sub folders in the image directory, splits them into stable
   training, testing, and validation sets, and returns a data structure
   describing the lists of images for each label and their paths.
   Args:
-    image_dir: String path to a folder containing subfolders osf images.
-    building_class: String name of building class (one of 10 building classes: 'Residentia', 'Meeting', 'Healthcare', 'Industry', 'Office',
-                    'Accommodat', 'Education', 'Sport', 'Shop', 'Other')
+    image_dir: String path to a folder containing subfolders of images.
+    building_class: String name of building class (one of 10 building classes:
+        'Residentia', 'Meeting', 'Healthcare', 'Industry', 'Office',
+        'Accommodat', 'Education', 'Sport', 'Shop', 'Other')
     fov: String name of field of view (one of four fovs: 'F30', 'F60', 'F90', 'F30_60_90')
    Returns:
     A dictionary containing an entry for each label subfolder, with images split
@@ -73,8 +63,8 @@ def create_image_lists(image_dir = image_dir, building_class = building_class,
     tf.logging.error('fov variable (', str(fov), ') does not have correct length of characters (should be 3 or 9)')
   if type(iteration) != type(0):
     tf.logging.error('iteration variable (', str(iteration),') does not have integer data type')
-  if iteration < 0 or iteration > 4:
-    tf.logging.error('iteration variable (', str(iteration), ') does not have number between 0 and 4')
+  if iteration < 0 or iteration > 3:
+    tf.logging.error('iteration variable (', str(iteration), ') does not have number between 0 and 3')
   # Load valid data of specific building class
   valid_rows = (building_points['valid'] == 'Yes')
   valid_columns = ['ID', 'BuildingID', 'BU_CODE', 'pano_id', building_class]
@@ -189,20 +179,17 @@ def create_image_lists(image_dir = image_dir, building_class = building_class,
     testing_neigh = kfold80_100_list
   if iteration == 1:
     training_neigh = kfold20_40_list + kfold40_60_list + kfold60_80_list
-    validation_neigh = kfold80_100_list
-    testing_neigh = kfold00_20_list
-  if iteration == 2:
-    training_neigh = kfold40_60_list + kfold60_80_list + kfold80_100_list
     validation_neigh = kfold00_20_list
-    testing_neigh = kfold20_40_list
-  if iteration == 3:
-    training_neigh = kfold60_80_list + kfold80_100_list + kfold00_20_list
+    testing_neigh = kfold80_100_list
+  if iteration == 2:
+    training_neigh = kfold40_60_list + kfold60_80_list + kfold00_20_list
     validation_neigh = kfold20_40_list
-    testing_neigh = kfold40_60_list
-  if iteration == 4:
-    training_neigh = kfold80_100_list + kfold00_20_list + kfold20_40_list
+    testing_neigh = kfold80_100_list
+  if iteration == 3:
+    training_neigh = kfold60_80_list + kfold00_20_list + kfold20_40_list
     validation_neigh = kfold40_60_list
-    testing_neigh = kfold60_80_list
+    testing_neigh = kfold80_100_list
+
 
   # Set base image directory
   base_image_dir = '/home/david/Documents/streetview-master/data'
@@ -422,7 +409,7 @@ def get_image_path(image_lists, label_name, index, image_dir, category):
   mod_index = index % len(category_list)
   full_path = category_list[mod_index]
   sub_dir = label_lists['dir']
-  full_path = os.path.join(image_dir, sub_dir, base_name)
+  full_path = os.path.join(image_dir, sub_dir)
   return full_path
 
 
@@ -1204,27 +1191,39 @@ def main(_):
   graph, bottleneck_tensor, resized_image_tensor = (
       create_model_graph(model_info))
 
-  # Set up naming scheme for output .csv files
+  # Set up variables for creating image lists
+  image_dir = FLAGS.image_dir
+  building_classes = ['Residentia', 'Meeting', 'Healthcare', 'Industry', 'Office',
+                      'Accommodat', 'Education', 'Sport', 'Shop', 'Other']
+  building_class = building_classes[0]  # Get residential class for now
+  fov = 'F30'
+  iteration = 0
+
+  # Create image lists and check if there are enough classes
+  image_lists = create_image_lists(image_dir = image_dir,
+      building_class = building_class, fov = fov, iteration=iteration)
+  class_count = len(image_lists.keys())
+  if class_count == 0:
+    tf.logging.error('Creating image list unsuccessful -'
+                     ' no valid classes were made')
+    return -1
+  if class_count == 1:
+    tf.logging.error('Creating image list unsuccessful' 
+                     '- multiple classes are needed for classification')
+    return -1
+
+  #Set up naming scheme for output .csv files
   f_class = building_class + '_'
   f_fov = fov + '_'
   f_model = str(FLAGS.architecture) + '_'
   f_iteration = str(iteration)
   f_name = f_class + f_fov + f_model + f_iteration + '.csv'
 
-  # Set up image_dir
-  image_dir = FLAGS.image_dir + '/' + fov
-
+  ## This part is old way of loading image lists into TensorFlow
   # Look at the folder structure, and create lists of all the images.
-  image_lists = load_image_lists(image_dir, f_name)
-  class_count = len(image_lists.keys())
-  if class_count == 0:
-    tf.logging.error('No valid folders of images found at ' + image_dir)
-    return -1
-  if class_count == 1:
-    tf.logging.error('Only one valid folder of images found at ' +
-                     image_dir +
-                     ' - multiple classes are needed for classification.')
-    return -1
+  # Set up image_dir
+  #image_dir = image_dir + '/' + fov
+  #image_lists = load_image_lists(image_dir, f_name)
 
   # See if the command-line flags mean we're applying any distortions.
   do_distort_images = should_distort_images(
@@ -1353,21 +1352,31 @@ def main(_):
         ground_truth_input: test_ground_truth})
 
     # Testing accuracy of predictions with statistics: 
-    # test accuracy, confusion matrix, kappa stats, precision, recall, computation time, wrongly predicted building ID
+    # overall test accuracy, average accuracy, confusion matrix, kappa stats,
+    # precision, recall, computation time, wrongly predicted building ID
     print('Filepath:', image_dir)
     tf.logging.info('Final test accuracy = %.1f%% (N=%d)' % (
         test_accuracy * 100, len(test_bottlenecks)))
     test_ground_truth_pd = pd.Series(test_ground_truth, name = "Actual")
     test_predictions_pd = pd.Series(predictions, name="Predicted")
-    conf_matrix = pd.crosstab(test_ground_truth_pd,test_predictions_pd, rownames=['Actual'], colnames=['Predicted'], margins=True)
+    conf_matrix = pd.crosstab(test_ground_truth_pd,test_predictions_pd,
+        rownames=['Actual'], colnames=['Predicted'], margins=True)
     print('------Confusion matrix--------')
     print(conf_matrix)
+    class_accuracy = float(conf_matrix[0][0]) / float(conf_matrix['All'][0]) * 100.0
+    non_class_accuracy = float(conf_matrix[1][1]) / float(conf_matrix['All'][1]) * 100.0
+    average_accuracy = (class_accuracy + non_class_accuracy) / 2
+    print('Average accuracy:', str(average_accuracy))
     proport_correct = (float(conf_matrix[0][0]) + float(conf_matrix[1][1])) / (
         float(conf_matrix.at[('All','All')]))
-    prob_resid = (((float(conf_matrix[0][0]) + float(conf_matrix[1][0])) / float(conf_matrix.at[('All','All')]))) * (
-        (float(conf_matrix[0][0]) + float(conf_matrix[0][1])) / float(conf_matrix.at[('All','All')]))
-    prob_non_resid = (((float(conf_matrix[0][1]) + float(conf_matrix[1][1])) / float(conf_matrix.at[('All','All')]))) * (
-        (float(conf_matrix[1][0]) + float(conf_matrix[1][1])) / float(conf_matrix.at[('All','All')]))
+    prob_resid = (((float(conf_matrix[0][0]) + float(conf_matrix[1][0])) /
+        float(conf_matrix.at[('All','All')]))) * (
+        (float(conf_matrix[0][0]) + float(conf_matrix[0][1])) /
+        float(conf_matrix.at[('All','All')]))
+    prob_non_resid = (((float(conf_matrix[0][1]) + float(conf_matrix[1][1])) /
+        float(conf_matrix.at[('All','All')]))) * (
+        (float(conf_matrix[1][0]) + float(conf_matrix[1][1])) /
+        float(conf_matrix.at[('All','All')]))
     prob_all = prob_resid + prob_non_resid
     kappa = (proport_correct - prob_all) / (1 - prob_all)
     print('Kappa statistics:', kappa)
@@ -1391,8 +1400,8 @@ def main(_):
     stats_file_name = '/stats_' + f_name
     with open((FLAGS.log_dir+stats_file_name), 'wb') as stats_file:
         wr = csv.writer(stats_file, quoting=csv.QUOTE_ALL)
-        wr.writerow(['kappa','precision','recall','computation_time(seconds)','test_accuracy'])
-        row = [kappa,precision,recall,comp_time.seconds,test_accuracy*100]
+        wr.writerow(['kappa','precision','recall','computation_time(seconds)','test_accuracy', 'average_accuracy'])
+        row = [kappa,precision,recall,comp_time.seconds,test_accuracy*100, average_accuracy]
         wr.writerow(row)
     print('Outcome statistics file: ' + stats_file_name + ' is stored at ' + FLAGS.log_dir)
     misclass_file_name = '/misclass_' + f_name
