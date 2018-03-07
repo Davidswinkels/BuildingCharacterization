@@ -274,28 +274,20 @@ def create_image_lists(image_dir = '/home/david/Documents/streetview-master/data
         non_class_testing_images += filepaths
   class_label_name = re.sub(r'[^a-z0-9]+', ' ', building_class.lower())
   non_class_label_name = "non_" + class_label_name
-  # make directory to store bottlenecks
-  class_bottleneck_dir = base_image_dir + "/bottleneck/" + class_label_name
-  non_class_bottleneck_dir = base_image_dir + "/bottleneck/" + non_class_label_name
-  ensure_dir_exists(class_bottleneck_dir)
-  ensure_dir_exists(non_class_bottleneck_dir)
   result = {}
   result[class_label_name] = {
-    'dir': class_bottleneck_dir,
+    'dir': class_label_name,
     'training': class_training_images,
     'testing': class_testing_images,
     'validation': class_validation_images
   }
   result[non_class_label_name] = {
-    'dir': non_class_bottleneck_dir,
+    'dir': non_class_label_name,
     'training': non_class_training_images,
     'testing': non_class_testing_images,
     'validation': non_class_validation_images
   }
   return result
-
-
-
 
 def load_image_lists(image_dir, f_name):
   """Builds a list of training images from the file system.
@@ -409,8 +401,6 @@ def get_image_path(image_lists, label_name, index, image_dir, category):
                      label_name, category)
   mod_index = index % len(category_list)
   full_path = category_list[mod_index]
-  sub_dir = label_lists['dir']
-  full_path = os.path.join(image_dir, sub_dir)
   return full_path
 
 
@@ -1168,16 +1158,19 @@ def main(_):
     print('Filepath:', image_dir)
     tf.logging.info('Final test accuracy = %.1f%% (N=%d)' % (
         test_accuracy * 100, len(test_bottlenecks)))
+
     test_ground_truth_pd = pd.Series(test_ground_truth, name = "Actual")
     test_predictions_pd = pd.Series(predictions, name="Predicted")
     conf_matrix = pd.crosstab(test_ground_truth_pd,test_predictions_pd,
         rownames=['Actual'], colnames=['Predicted'], margins=True)
     print('------Confusion matrix--------')
     print(conf_matrix)
+
     class_accuracy = float(conf_matrix[0][0]) / float(conf_matrix['All'][0]) * 100.0
     non_class_accuracy = float(conf_matrix[1][1]) / float(conf_matrix['All'][1]) * 100.0
     average_accuracy = (class_accuracy + non_class_accuracy) / 2
     print('Average accuracy:', str(average_accuracy))
+
     proport_correct = (float(conf_matrix[0][0]) + float(conf_matrix[1][1])) / (
         float(conf_matrix.at[('All','All')]))
     prob_resid = (((float(conf_matrix[0][0]) + float(conf_matrix[1][0])) /
@@ -1191,13 +1184,16 @@ def main(_):
     prob_all = prob_resid + prob_non_resid
     kappa = (proport_correct - prob_all) / (1 - prob_all)
     print('Kappa statistics:', kappa)
+
     precision = conf_matrix[0][0] / conf_matrix[0]['All']
     recall = conf_matrix[0][0] / conf_matrix['All'][0]
     print('Precision:', precision)
     print('Recall:', recall)
+
     comp_time = datetime.now() - start_time
     print('Computation time in days, hours, minutes, seconds:', days_hours_minutes_seconds(comp_time))
     print('Computation time in seconds:', comp_time.seconds)
+
     build_pred_error = []
     for i, test_filename in enumerate(test_filenames):
         if predictions[i] != test_ground_truth[i]:

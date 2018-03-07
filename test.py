@@ -262,11 +262,14 @@ def create_image_lists(image_dir = '/home/david/Documents/streetview-master/data
         non_class_testing_images += filepaths
   class_label_name = re.sub(r'[^a-z0-9]+', ' ', building_class.lower())
   non_class_label_name = "non_" + class_label_name
-  # make directory to store bottlenecks
+
+  # Make directory to store bottlenecks
   class_bottleneck_dir = base_image_dir + "/bottleneck/" + class_label_name
   non_class_bottleneck_dir = base_image_dir + "/bottleneck/" + non_class_label_name
   ensure_dir_exists(class_bottleneck_dir)
   ensure_dir_exists(non_class_bottleneck_dir)
+
+  # Combine lists in dictionary and return result of combined lists
   result = {}
   result[class_label_name] = {
     'dir': class_bottleneck_dir,
@@ -286,3 +289,5 @@ def create_image_lists(image_dir = '/home/david/Documents/streetview-master/data
 image_lists = create_image_lists()
 
 print(image_lists.keys())
+print(image_lists['residentia'].keys())
+print(image_lists['non_residentia'].keys())
