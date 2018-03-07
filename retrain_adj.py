@@ -37,8 +37,7 @@ MAX_NUM_IMAGES_PER_CLASS = 2 ** 27 - 1  # ~134M
 input_file = "./input/BuildingPointsValidImages.csv"
 building_points = pd.read_csv(input_file)
 
-def create_image_lists(image_dir = '/home/david/Documents/streetview-master/data',
-                       building_class, fov , iteration):
+def create_image_lists(image_dir, building_class, fov , iteration):
   """Builds a list of training, validation and testing images from the file system.
   Analyzes the sub folders in the image directory, splits them into stable
   training, testing, and validation sets, and returns a data structure
@@ -54,18 +53,16 @@ def create_image_lists(image_dir = '/home/david/Documents/streetview-master/data
     A dictionary containing an entry for each label subfolder, with images split
     into training, testing, and validation sets within each label.
   """
-  global validation_neigh
   if not gfile.Exists(image_dir):
     tf.logging.error("Image directory '" + image_dir + "' not found.")
-    return None
   if type(building_class) != type('str'):
-    tf.logging.error('building_class variable (', str(building_class),') does not have string data type')
-  if len(fov) != 3 or len(fov) != 9:
-    tf.logging.error('fov variable (', str(fov), ') does not have correct length of characters (should be 3 or 9)')
+    tf.logging.error('Building_class variable (' + str(building_class) + ') does not have string data type.')
+  if len(fov) != 3 and len(fov) != 9:
+    tf.logging.error('Fov variable (' + str(fov) + ') should have length of 3 or 9).')
   if type(iteration) != type(0):
-    tf.logging.error('iteration variable (', str(iteration),') does not have integer data type')
+    tf.logging.error('Iteration variable (' + str(iteration) + ') does not have integer data type.')
   if iteration < 0 or iteration > 3:
-    tf.logging.error('iteration variable (', str(iteration), ') does not have number between 0 and 3 (inclusive)')
+    tf.logging.error('Iteration variable (' + str(iteration) + ') does not have number between 0 and 3 (inclusive).')
   # Load valid data of specific building class
   valid_rows = (building_points['valid'] == 'Yes')
   valid_columns = ['ID', 'BuildingID', 'BU_CODE', 'pano_id', building_class]
@@ -391,10 +388,10 @@ def get_image_path(image_lists, label_name, index, image_dir, category):
 
   """
   if label_name not in image_lists:
-    tf.logging.fatal('Label does not exist %s.', label_name)
+    tf.logging.fatal('Label does not exist' + label_name)
   label_lists = image_lists[label_name]
   if category not in label_lists:
-    tf.logging.fatal('Category does not exist %s.', category)
+    tf.logging.fatal('Category does not exist' + category)
   category_list = label_lists[category]
   if not category_list:
     tf.logging.fatal('Label %s has no images in the category %s.',
@@ -529,7 +526,7 @@ def create_bottleneck_file(bottleneck_path, image_lists, label_name, index,
   image_path = get_image_path(image_lists, label_name, index,
                               image_dir, category)
   if not gfile.Exists(image_path):
-    tf.logging.fatal('File does not exist %s', image_path)
+    tf.logging.fatal('File does not exist ' + image_path)
   image_data = gfile.FastGFile(image_path, 'rb').read()
   try:
     bottleneck_values = run_bottleneck_on_image(
@@ -1012,7 +1009,7 @@ def main(_):
   maybe_download_and_extract(model_info['data_url'])
   start_time = datetime.now()  # Save starting time after downloading model
   graph, bottleneck_tensor, resized_image_tensor = (
-      create_model_graph(model_info))
+    create_model_graph(model_info))
 
   # Give image directory
   image_dir = FLAGS.image_dir
