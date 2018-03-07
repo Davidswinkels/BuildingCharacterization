@@ -38,7 +38,7 @@ input_file = "./input/BuildingPointsValidImages.csv"
 building_points = pd.read_csv(input_file)
 
 def create_image_lists(image_dir = '/home/david/Documents/streetview-master/data',
-                       building_class = 'Residentia', fov = 'F30' , iteration = 0 ):
+                       building_class, fov , iteration):
   """Builds a list of training, validation and testing images from the file system.
   Analyzes the sub folders in the image directory, splits them into stable
   training, testing, and validation sets, and returns a data structure
@@ -1002,7 +1002,6 @@ def main(_):
 
   # Prepare necessary directories that can be used during training
   prepare_file_system()
-h
   # Gather information about the model architecture we'll be using.
   model_info = create_model_info(FLAGS.architecture)
   if not model_info:
@@ -1015,13 +1014,8 @@ h
   graph, bottleneck_tensor, resized_image_tensor = (
       create_model_graph(model_info))
 
-  # Set up variables for creating image lists
+  # Give image directory
   image_dir = FLAGS.image_dir
-  building_classes = ['Residentia', 'Meeting', 'Healthcare', 'Industry', 'Office',
-                      'Accommodat', 'Education', 'Sport', 'Shop', 'Other']
-  building_class = building_classes[0]  # Get residential class for now
-  fov = 'F30'
-  iteration = 0
 
   # Create image lists and check if there are enough classes
   image_lists = create_image_lists(image_dir = image_dir,
@@ -1376,12 +1370,25 @@ if __name__ == '__main__':
       """)
   FLAGS, unparsed = parser.parse_known_args()
 
+  # Creating input variables
+  iterations = [0, 1, 2, 3]
+  building_classes_all = ['Residentia', 'Meeting', 'Healthcare', 'Industry', 'Office',
+                      'Accommodat', 'Education', 'Sport', 'Shop', 'Other']
+  building_classes = ['Residentia', 'Meeting', 'Industry', 'Office', 'Shop']
   architectures = ['inception_v3','mobilenet_1.0_224']
-  fovs = ['F30','F60','F90','F30_60_90']
-  for fov in fovs:
-    print("CNN model: ", architectures[0], fov)
-    FLAGS.architecture = architectures[0]
-    tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
-    print("CNN model: ", architectures[1], fov)
-    FLAGS.architecture = architectures[1]
-    tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+  fovs = ['F30', 'F60', 'F90', 'F30_60_90']
+
+  # Testing input variables
+  iterations = [2, 3]
+  building_classes = ['Office', 'Shop']
+  architectures = ['mobilenet_1.0_224']
+  fovs = ['F30', 'F30_60_90']
+
+  # Looping over CNN models
+  for iteration in iterations:
+    for building_class in building_classes:
+      for architecture in architectures:
+        for fov in fovs:
+          print("CNN model: ", building_class, fov, architecture, str(iteration))
+          FLAGS.architecture = architecture
+          tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
