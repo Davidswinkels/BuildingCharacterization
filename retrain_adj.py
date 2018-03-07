@@ -572,10 +572,10 @@ def get_or_create_bottleneck(sess, image_lists, label_name, index, image_dir,
   Returns:
     Numpy array of values produced by the bottleneck layer for the image.
   """
-  label_lists = image_lists[label_name]
-  sub_dir = label_lists['dir']
-  sub_dir_path = os.path.join(bottleneck_dir, sub_dir)
-  ensure_dir_exists(sub_dir_path)
+  #label_lists = image_lists[label_name]
+  #sub_dir = label_lists['dir']
+  #sub_dir_path = os.path.join(bottleneck_dir, sub_dir)
+  #ensure_dir_exists(sub_dir_path)
   bottleneck_path = get_bottleneck_path(image_lists, label_name, index,
                                         bottleneck_dir, category, architecture)
   if not os.path.exists(bottleneck_path):
@@ -1002,7 +1002,7 @@ def main(_):
 
   # Prepare necessary directories that can be used during training
   prepare_file_system()
-
+h
   # Gather information about the model architecture we'll be using.
   model_info = create_model_info(FLAGS.architecture)
   if not model_info:
