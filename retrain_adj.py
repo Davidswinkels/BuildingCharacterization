@@ -188,10 +188,6 @@ def create_image_lists(image_dir, building_class, fov , iteration):
     validation_neigh = kfold40_60_list
     testing_neigh = kfold80_100_list
 
-
-  # Set base image directory
-  base_image_dir = '/home/david/Documents/streetview-master/data'
-
   # Create empty lists for training, validation and testing image filepaths
   # One list for class and one for non-class
   class_training_images = []
@@ -206,18 +202,18 @@ def create_image_lists(image_dir, building_class, fov , iteration):
     # Load valid data of specific building class
     rows_neigh = (images_valid['BU_CODE'] == neigh)
     images_neigh = images_valid.loc[rows_neigh,]
-    image_dir = base_image_dir + '/' + neigh[-4:]
+    image_dir_neigh = image_dir + '/' + neigh[-4:]
     for idx, image in images_neigh.iterrows():
       if len(fov) == 3:
         filename = "N" + image['BU_CODE'] + "_B" + str(image['BuildingID']) + "_P" \
                        + image['pano_id'] + "_" + fov + "_A00.jpg"
-        filepaths = [image_dir + "/" + filename]
+        filepaths = [image_dir_neigh + "/" + filename]
       if len(fov) == 9:
         filepaths = []
         for fov2 in ['F30','F60','F90']:
           filename = "N" + image['BU_CODE'] + "_B" + str(image['BuildingID']) + "_P" \
            + image['pano_id'] + "_" + fov2 + "_A00.jpg"
-          filepath = image_dir + "/" + filename
+          filepath = image_dir_neigh + "/" + filename
           filepaths += [filepath]
       if image[building_class] == 1:
         class_training_images += filepaths
@@ -229,18 +225,18 @@ def create_image_lists(image_dir, building_class, fov , iteration):
     # Load valid data of specific building class
     rows_neigh = (images_valid['BU_CODE'] == neigh)
     images_neigh = images_valid.loc[rows_neigh,]
-    image_dir = base_image_dir + '/' + neigh[-4:]
+    image_dir_neigh = image_dir + '/' + neigh[-4:]
     for idx, image in images_neigh.iterrows():
       if len(fov) == 3:
         filename = "N" + image['BU_CODE'] + "_B" + str(image['BuildingID']) + "_P" \
                    + image['pano_id'] + "_" + fov + "_A00.jpg"
-        filepaths = [image_dir + "/" + filename]
+        filepaths = [image_dir_neigh + "/" + filename]
       if len(fov) == 9:
         filepaths = []
         for fov2 in ['F30', 'F60', 'F90']:
           filename = "N" + image['BU_CODE'] + "_B" + str(image['BuildingID']) + "_P" \
                      + image['pano_id'] + "_" + fov2 + "_A00.jpg"
-          filepath = image_dir + "/" + filename
+          filepath = image_dir_neigh + "/" + filename
           filepaths += [filepath]
       if image[building_class] == 1:
         class_validation_images += filepaths
@@ -252,18 +248,18 @@ def create_image_lists(image_dir, building_class, fov , iteration):
     # Load valid data of specific building class
     rows_neigh = (images_valid['BU_CODE'] == neigh)
     images_neigh = images_valid.loc[rows_neigh,]
-    image_dir = base_image_dir + '/' + neigh[-4:]
+    image_dir_neigh = image_dir + '/' + neigh[-4:]
     for idx, image in images_neigh.iterrows():
       if len(fov) == 3:
         filename = "N" + image['BU_CODE'] + "_B" + str(image['BuildingID']) + "_P" \
                    + image['pano_id'] + "_" + fov + "_A00.jpg"
-        filepaths = [image_dir + "/" + filename]
+        filepaths = [image_dir_neigh + "/" + filename]
       if len(fov) == 9:
         filepaths = []
         for fov2 in ['F30', 'F60', 'F90']:
           filename = "N" + image['BU_CODE'] + "_B" + str(image['BuildingID']) + "_P" \
                      + image['pano_id'] + "_" + fov2 + "_A00.jpg"
-          filepath = image_dir + "/" + filename
+          filepath = image_dir_neigh + "/" + filename
           filepaths += [filepath]
       if image[building_class] == 1:
         class_testing_images += filepaths
@@ -1198,8 +1194,8 @@ def main(_):
     stats_file_name = '/stats_' + f_name
     with open((FLAGS.log_dir+stats_file_name), 'wb') as stats_file:
         wr = csv.writer(stats_file, quoting=csv.QUOTE_ALL)
-        wr.writerow(['kappa','precision','recall','computation_time(seconds)','test_accuracy', 'average_accuracy'])
-        row = [kappa,precision,recall,comp_time.seconds,test_accuracy*100, average_accuracy]
+        wr.writerow(['test_n','kappa','precision','recall','computation_time(seconds)','test_accuracy', 'average_accuracy'])
+        row = [len(test_bottlenecks),kappa,precision,recall,comp_time.seconds,test_accuracy*100, average_accuracy]
         wr.writerow(row)
     print('Outcome statistics file: ' + stats_file_name + ' is stored at ' + FLAGS.log_dir)
     misclass_file_name = '/misclass_' + f_name
