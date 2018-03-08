@@ -282,90 +282,6 @@ def create_image_lists(image_dir, building_class, fov , iteration):
   }
   return result
 
-def load_image_lists(image_dir, f_name):
-  """Builds a list of training images from the file system.
-
-  Analyzes the sub folders in the image directory, splits them into stable
-  training, testing, and validation sets, and returns a data structure
-  describing the lists of images for each label and their paths.
-
-  Args:
-    image_dir: String path to a folder containing subfolders of images.
-   Returns:
-    A dictionary containing an entry for each label subfolder, with images split
-    into training, testing, and validation sets within each label.
-  """
-  if not gfile.Exists(image_dir):
-    tf.logging.error("Image directory '" + image_dir + "' not found.")
-    return None
-  result = {}
-  class_files = os.listdir(image_dir)
-  class_dirs = []
-  for filename in class_files:
-    if "." not in filename:
-      class_dirs.append(filename)
-  # The root directory comes first, so skip it.
-  for class_dir in class_dirs:
-    dir_name = os.path.basename(class_dir)
-    training_images = []
-    validation_images = []
-    testing_images = []
-    error_jpg_list = []
-    for sub_dir in ['training', 'validation', 'testing']:
-        file_glob = os.path.join(image_dir, class_dir, sub_dir, '*.jpg')
-        ## Check if file is correct jpg
-        file_list = gfile.Glob(file_glob)
-
-        for filepath in file_list:
-            # check if file is type of JPEG File Interchange Format
-            if imghdr.what(filepath) != 'jpeg':
-                file_list.remove(filepath)
-                error_jpg_list.append(filepath)
-                print('WARNING: ' + filepath + ' does not have correct jpeg format')
-        if sub_dir == 'training':
-            training_images.extend(file_list)
-            if not training_images:
-                tf.logging.warning('No files found')
-                continue
-            if len(training_images) < 20:
-                tf.logging.warning(
-                'WARNING: Folder has less than 20 images, which may cause issues.')
-        if sub_dir == 'validation':
-            validation_images.extend(file_list)
-            if not validation_images:
-                tf.logging.warning('No files found')
-                continue
-            if len(validation_images) < 20:
-                tf.logging.warning(
-                'WARNING: Folder has less than 20 images, which may cause issues.')
-        if sub_dir == 'testing':
-            testing_images.extend(file_list)
-            if not testing_images:
-                tf.logging.warning('No files found')
-                continue
-            if len(testing_images) < 20:
-                tf.logging.warning(
-                'WARNING: Folder has less than 20 images, which may cause issues.')
-
-    error_jpg_file_name = '/errorjpg_' + f_name
-    with open((FLAGS.log_dir + error_jpg_file_name), 'wb') as error_jpg_file:
-        wr = csv.writer(error_jpg_file, quoting=csv.QUOTE_ALL)
-        wr.writerow(['BuildingID', 'Filepath'])
-        for error_jpg_image in error_jpg_list:
-            # Regular expression to get BuildingID out of filepath
-            match = re.search("_B([0-9]*)_", error_jpg_image)
-            # Write BuildingID and Filepath to csv file
-            wr.writerow([match.group(1), error_jpg_image])
-    label_name = re.sub(r'[^a-z0-9]+', ' ', dir_name.lower())
-    result[label_name] = {
-        'dir': dir_name,
-        'training': training_images,
-        'testing': testing_images,
-        'validation': validation_images,
-    }
-  return result
-
-
 def get_image_path(image_lists, label_name, index, image_dir, category):
   """"Returns a path to an image for a label at the given index.
 
@@ -1029,12 +945,6 @@ def main(_):
   f_model = str(FLAGS.architecture) + '_'
   f_iteration = str(iteration)
   f_name = f_class + f_fov + f_model + f_iteration + '.csv'
-
-  ## This part is old way of loading image lists into TensorFlow
-  # Look at the folder structure, and create lists of all the images.
-  # Set up image_dir
-  #image_dir = image_dir + '/' + fov
-  #image_lists = load_image_lists(image_dir, f_name)
 
   with tf.Session(graph=graph) as sess:
     # Set up the image decoding sub-graph.
