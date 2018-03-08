@@ -94,7 +94,6 @@ def create_image_lists(image_dir, building_class, fov , iteration):
 
   # Create five subsets that have equal distribution with different neighbourhoods
   for idx, neighbourhood_code in enumerate(neighbourhood_codes):
-      print("Iteration number: " + str(idx + 1))
       # Instantiate five fold subsets with five neighbourhoods each
       if len(kfold00_20_list) < 5:
           kfold00_20_list.append(neighbourhood_code)
@@ -155,13 +154,6 @@ def create_image_lists(image_dir, building_class, fov , iteration):
 
       print("Total number of buildings added " + str(int(building_total + total_buildings_neighbourhood[idx])) +
             " out of " + str(sum(total_buildings_neighbourhood)) + " buildings")
-
-  print("------ Kfold neighbourhood lists -----")
-  print(kfold00_20_list)
-  print(kfold20_40_list)
-  print(kfold40_60_list)
-  print(kfold60_80_list)
-  print(kfold80_100_list)
 
   print("------ Kfold count building (class, non-class and total) -----")
   print(kfold00_20_count)
@@ -1053,8 +1045,6 @@ def main(_):
     # overall test accuracy, average accuracy, confusion matrix, kappa stats,
     # precision, recall, computation time, wrongly predicted building ID
     print('Filepath:', image_dir)
-    tf.logging.info('Final test accuracy = %.1f%% (N=%d)' % (
-        test_accuracy * 100, len(test_bottlenecks)))
 
     test_ground_truth_pd = pd.Series(test_ground_truth, name = "Actual")
     test_predictions_pd = pd.Series(predictions, name="Predicted")
@@ -1063,10 +1053,26 @@ def main(_):
     print('------Confusion matrix--------')
     print(conf_matrix)
 
+    tf.logging.info('Final test accuracy = %.1f%% (N=%d)' % (
+        test_accuracy * 100, len(test_bottlenecks)))
+
     class_accuracy = float(conf_matrix[0][0]) / float(conf_matrix['All'][0]) * 100.0
     non_class_accuracy = float(conf_matrix[1][1]) / float(conf_matrix['All'][1]) * 100.0
     average_accuracy = (class_accuracy + non_class_accuracy) / 2
     print('Average accuracy:', str(average_accuracy))
+
+    # Count number of training, validation and testing images
+    class_label_name = re.sub(r'[^a-z0-9]+', ' ', building_class.lower())
+    non_class_label_name = "non_" + class_label_name
+    train_count = len(image_lists[class_label_name]['training']) +\
+                  len(image_lists[non_class_label_name]['training'])
+    validation_count = len(image_lists[class_label_name]['validation']) +\
+                       len(image_lists[non_class_label_name]['validation'])
+    test_count = len(image_lists[class_label_name]['testing']) +\
+                 len(image_lists[non_class_label_name]['testing'])
+    print('Number of training, validation and testing images:',
+          str(train_count), str(validation_count), str(test_count))
+
 
     proport_correct = (float(conf_matrix[0][0]) + float(conf_matrix[1][1])) / (
         float(conf_matrix.at[('All','All')]))
@@ -1101,11 +1107,14 @@ def main(_):
     conf_file_name = '/conf_' + f_name
     conf_matrix.to_csv(FLAGS.log_dir + conf_file_name)
     print('Confusion matrix file: ' + conf_file_name + ' is stored at ' + FLAGS.log_dir)
+
+
     stats_file_name = '/stats_' + f_name
     with open((FLAGS.log_dir+stats_file_name), 'wb') as stats_file:
         wr = csv.writer(stats_file, quoting=csv.QUOTE_ALL)
-        wr.writerow(['test_n','kappa','precision','recall','computation_time(seconds)','test_accuracy', 'average_accuracy'])
-        row = [len(test_bottlenecks),kappa,precision,recall,comp_time.seconds,test_accuracy*100, average_accuracy]
+        wr.writerow(['train_n', 'validation_n', 'test_n','kappa','precision',
+                     'recall','computation_time(seconds)','test_accuracy', 'average_accuracy'])
+        row = [train_count,validation_count,test_count, kappa,precision,recall,comp_time.seconds,test_accuracy*100, average_accuracy]
         wr.writerow(row)
     print('Outcome statistics file: ' + stats_file_name + ' is stored at ' + FLAGS.log_dir)
     misclass_file_name = '/misclass_' + f_name
@@ -1275,17 +1284,10 @@ if __name__ == '__main__':
 
   # Creating input variables
   iterations = [0, 1, 2, 3]
-  building_classes_all = ['Residentia', 'Meeting', 'Healthcare', 'Industry', 'Office',
-                      'Accommodat', 'Education', 'Sport', 'Shop', 'Other']
+  #building_classes_all = ['Residentia', 'Meeting', 'Healthcare', 'Industry', 'Office','Accommodat', 'Education', 'Sport', 'Shop', 'Other']
   building_classes = ['Residentia', 'Meeting', 'Industry', 'Office', 'Shop']
   architectures = ['inception_v3','mobilenet_1.0_224']
   fovs = ['F30', 'F60', 'F90', 'F30_60_90']
-
-  # Testing input variables
-  iterations = [2, 3]
-  building_classes = ['Office', 'Shop']
-  architectures = ['mobilenet_1.0_224']
-  fovs = ['F30', 'F30_60_90']
 
   # Looping over CNN models
   for iteration in iterations:
