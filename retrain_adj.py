@@ -1254,13 +1254,6 @@ if __name__ == '__main__':
   architectures = ['inception_v3','mobilenet_1.0_224']
   fovs = ['F30', 'F60', 'F90', 'F30_60_90']
 
-  # Creating input variables
-  iterations = [0]
-  #building_classes_all = ['Residentia', 'Meeting', 'Healthcare', 'Industry', 'Office','Accommodat', 'Education', 'Sport', 'Shop', 'Other']
-  building_classes = ['Residentia']
-  architectures = ['mobilenet_1.0_224']
-  fovs = ['F30']
-
   # Looping over CNN models
   for iteration in iterations:
     for building_class in building_classes:
