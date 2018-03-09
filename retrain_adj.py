@@ -72,8 +72,7 @@ def create_image_lists(image_dir, building_class, fov , iteration):
   total_buildings_neighbourhood = images_valid.groupby('BU_CODE')['BU_CODE'].count()
   class_buildings_neighbourhood = images_valid.groupby('BU_CODE')[building_class].sum()
   non_class_buildings_neighbourhood = total_buildings_neighbourhood - class_buildings_neighbourhood
-  class_distribution = (float(sum(class_buildings_neighbourhood)) / float(sum(total_buildings_neighbourhood))) * 100.0
-  print("Class distribution (", building_class, "):", round(class_distribution, 2), "percentage")
+
   # Get unique neighbourhood codes from valid images
   neighbourhood_codes = images_valid['BU_CODE'].unique()
 
@@ -151,16 +150,6 @@ def create_image_lists(image_dir, building_class, fov , iteration):
               kfold80_100_count[0] = kfold80_100_count[0] + class_buildings_neighbourhood[idx]
               kfold80_100_count[1] = kfold80_100_count[1] + non_class_buildings_neighbourhood[idx]
               kfold80_100_count[2] = kfold80_100_count[2] + total_buildings_neighbourhood[idx]
-
-      print("Total number of buildings added " + str(int(building_total + total_buildings_neighbourhood[idx])) +
-            " out of " + str(sum(total_buildings_neighbourhood)) + " buildings")
-
-  print("------ Kfold count building (class, non-class and total) -----")
-  print(kfold00_20_count)
-  print(kfold20_40_count)
-  print(kfold40_60_count)
-  print(kfold60_80_count)
-  print(kfold80_100_count)
 
   # Creating training, validation and testing sets per class
   if iteration == 0:
@@ -338,7 +327,6 @@ def create_model_graph(model_info):
   """
   with tf.Graph().as_default() as graph:
     model_path = os.path.join(FLAGS.model_dir, model_info['model_file_name'])
-    print('Model path: ', model_path)
     with gfile.FastGFile(model_path, 'rb') as f:
       graph_def = tf.GraphDef()
       graph_def.ParseFromString(f.read())
@@ -401,7 +389,6 @@ def maybe_download_and_extract(data_url):
       sys.stdout.flush()
 
     filepath, _ = urllib.request.urlretrieve(data_url, filepath, _progress)
-    print()
     statinfo = os.stat(filepath)
     tf.logging.info('Successfully downloaded', filename, statinfo.st_size,
                     'bytes.')
@@ -997,10 +984,8 @@ def main(_):
             [evaluation_step, cross_entropy],
             feed_dict={bottleneck_input: train_bottlenecks,
                        ground_truth_input: train_ground_truth})
-        tf.logging.info('%s: Step %d: Train accuracy = %.1f%%' %
-                        (datetime.now(), i, train_accuracy * 100))
-        tf.logging.info('%s: Step %d: Cross entropy = %f' %
-                        (datetime.now(), i, cross_entropy_value))
+        #tf.logging.info('%s: Step %d: Train accuracy = %.1f%%' % (datetime.now(), i, train_accuracy * 100))
+        #tf.logging.info('%s: Step %d: Cross entropy = %f' % (datetime.now(), i, cross_entropy_value))
         validation_bottlenecks, validation_ground_truth, _ = (
             get_random_cached_bottlenecks(
                 sess, image_lists, FLAGS.validation_batch_size, 'validation',
@@ -1014,9 +999,7 @@ def main(_):
             feed_dict={bottleneck_input: validation_bottlenecks,
                        ground_truth_input: validation_ground_truth})
         validation_writer.add_summary(validation_summary, i)
-        tf.logging.info('%s: Step %d: Validation accuracy = %.1f%% (N=%d)' %
-                        (datetime.now(), i, validation_accuracy * 100,
-                         len(validation_bottlenecks)))
+        #tf.logging.info('%s: Step %d: Validation accuracy = %.1f%% (N=%d)' %(datetime.now(), i, validation_accuracy * 100, len(validation_bottlenecks)))
 
       # Store intermediate results
       intermediate_frequency = FLAGS.intermediate_store_frequency
@@ -1044,22 +1027,16 @@ def main(_):
     # Testing accuracy of predictions with statistics: 
     # overall test accuracy, average accuracy, confusion matrix, kappa stats,
     # precision, recall, computation time, wrongly predicted building ID
-    print('Filepath:', image_dir)
-
     test_ground_truth_pd = pd.Series(test_ground_truth, name = "Actual")
     test_predictions_pd = pd.Series(predictions, name="Predicted")
     conf_matrix = pd.crosstab(test_ground_truth_pd,test_predictions_pd,
         rownames=['Actual'], colnames=['Predicted'], margins=True)
-    print('------Confusion matrix--------')
-    print(conf_matrix)
 
-    tf.logging.info('Final test accuracy = %.1f%% (N=%d)' % (
-        test_accuracy * 100, len(test_bottlenecks)))
+    #tf.logging.info('Final test accuracy = %.1f%% (N=%d)' % (test_accuracy * 100, len(test_bottlenecks)))
 
     class_accuracy = float(conf_matrix[0][0]) / float(conf_matrix['All'][0]) * 100.0
     non_class_accuracy = float(conf_matrix[1][1]) / float(conf_matrix['All'][1]) * 100.0
     average_accuracy = (class_accuracy + non_class_accuracy) / 2
-    print('Average accuracy:', str(average_accuracy))
 
     # Count number of training, validation and testing images
     class_label_name = re.sub(r'[^a-z0-9]+', ' ', building_class.lower())
@@ -1070,9 +1047,6 @@ def main(_):
                        len(image_lists[non_class_label_name]['validation'])
     test_count = len(image_lists[class_label_name]['testing']) +\
                  len(image_lists[non_class_label_name]['testing'])
-    print('Number of training, validation and testing images:',
-          str(train_count), str(validation_count), str(test_count))
-
 
     proport_correct = (float(conf_matrix[0][0]) + float(conf_matrix[1][1])) / (
         float(conf_matrix.at[('All','All')]))
@@ -1086,16 +1060,11 @@ def main(_):
         float(conf_matrix.at[('All','All')]))
     prob_all = prob_resid + prob_non_resid
     kappa = (proport_correct - prob_all) / (1 - prob_all)
-    print('Kappa statistics:', kappa)
 
     precision = conf_matrix[0][0] / conf_matrix[0]['All']
     recall = conf_matrix[0][0] / conf_matrix['All'][0]
-    print('Precision:', precision)
-    print('Recall:', recall)
 
     comp_time = datetime.now() - start_time
-    print('Computation time in days, hours, minutes, seconds:', days_hours_minutes_seconds(comp_time))
-    print('Computation time in seconds:', comp_time.seconds)
 
     build_pred_error = []
     for i, test_filename in enumerate(test_filenames):
@@ -1106,8 +1075,6 @@ def main(_):
     # Write out confusion matrix, outcome statistics and list of misclassified test images to file
     conf_file_name = '/conf_' + f_name
     conf_matrix.to_csv(FLAGS.log_dir + conf_file_name)
-    print('Confusion matrix file: ' + conf_file_name + ' is stored at ' + FLAGS.log_dir)
-
 
     stats_file_name = '/stats_' + f_name
     with open((FLAGS.log_dir+stats_file_name), 'wb') as stats_file:
@@ -1116,14 +1083,12 @@ def main(_):
                      'recall','computation_time(seconds)','test_accuracy', 'average_accuracy'])
         row = [train_count,validation_count,test_count, kappa,precision,recall,comp_time.seconds,test_accuracy*100, average_accuracy]
         wr.writerow(row)
-    print('Outcome statistics file: ' + stats_file_name + ' is stored at ' + FLAGS.log_dir)
     misclass_file_name = '/misclass_' + f_name
     with open((FLAGS.log_dir+misclass_file_name), 'wb') as misclass_file:
         wr = csv.writer(misclass_file, quoting=csv.QUOTE_ALL)
         wr.writerow(['BuildingID'])
         for misclass_image in build_pred_error:
             wr.writerow([misclass_image])
-    print('Misclassified images file: ' + misclass_file_name + ' is stored at ' + FLAGS.log_dir)
     if FLAGS.print_misclassified_test_images:
       tf.logging.info('=== MISCLASSIFIED TEST IMAGES ===')
       for i, test_filename in enumerate(test_filenames):
@@ -1288,6 +1253,13 @@ if __name__ == '__main__':
   building_classes = ['Residentia', 'Meeting', 'Industry', 'Office', 'Shop']
   architectures = ['inception_v3','mobilenet_1.0_224']
   fovs = ['F30', 'F60', 'F90', 'F30_60_90']
+
+  # Creating input variables
+  iterations = [0]
+  #building_classes_all = ['Residentia', 'Meeting', 'Healthcare', 'Industry', 'Office','Accommodat', 'Education', 'Sport', 'Shop', 'Other']
+  building_classes = ['Residentia']
+  architectures = ['mobilenet_1.0_224']
+  fovs = ['F30']
 
   # Looping over CNN models
   for iteration in iterations:
