@@ -14,70 +14,89 @@ options(scipen=999)
 ```
 
 ```{r read}
-Buildings <- read.csv2(file = "D:/Workspace/ExtraData/AddressBuildingAmsterdam.csv", sep = ",")
+## Read buildings data
+buildings <- read.csv2(file = "D:/Workspace/ExtraData/AddressBuildingAmsterdam.csv", sep = ",")
+
+## Check buildings data
 # str(Buildings)
-
-dim(Buildings)
-# 
+# dim(Buildings)
 # head(Buildings)
-# 
-as.numeric(levels(Buildings$BuildingID))[Buildings$BuildingID]
-# 
-head(Buildings)
-tail(Buildings)
+# as.numeric(levels(Buildings$BuildingID))[Buildings$BuildingID]
+# head(Buildings)
+# tail(Buildings)
 ```
 
-```{r concatenateAllLandUse}
-result <- aggregate(Gebruiksdo ~ BuildingID, data = Buildings, paste, collapse = ",")
+```{r concatenateFunctions1}
+## Aggregate building data excluding cell function
 
-namescolumns <- c("Residential", "Meeting", "Cell", "Healthcare", "Industry", "Office", "Accommodation", "Education", "Sport", "Shop", "Other")
+## Aggregrate building data
+buildings_aggr_clean <- aggregate(Gebruiksdo ~ BuildingID, data = Buildings, paste, collapse = ",")
 
-for (name in namescolumns){
-  result[,name] <- 0
+## Check aggregated buildings
+str(buildings_aggr_clean)
+
+names <- c("Residential", "Meeting", "Healthcare", "Industry", "Office", "Accommodation", "Education", "Sport", "Shop", "Other")
+
+## For every column in names set all values in rows to zero
+for (name in names){
+  buildings_aggr_clean[,name] <- 0
 }
 
-str(result)
-result$Residential[(grepl("woonfunctie", result$Gebruiksdo))] <- 1
-result$Meeting[(grepl("bijeenkomstfunctie", result$Gebruiksdo))] <- 1
-result$Cell[(grepl("celfunctie", result$Gebruiksdo))] <- 1
-result$Healthcare[(grepl("gezondheidszorgfunctie", result$Gebruiksdo))] <- 1
-result$Industry[(grepl("industriefunctie", result$Gebruiksdo))] <- 1
-result$Office[(grepl("kantoorfunctie", result$Gebruiksdo))] <- 1
-result$Accommodation[(grepl("logiesfunctie", result$Gebruiksdo))] <- 1
-result$Education[(grepl("onderwijsfunctie", result$Gebruiksdo))] <- 1
-result$Sport[(grepl("sportfunctie", result$Gebruiksdo))] <- 1
-result$Shop[(grepl("winkelfunctie", result$Gebruiksdo))] <- 1
-result$Other[(grepl("overige gebruiksfunctie", result$Gebruiksdo))] <- 1
+## Make index in column where specific function is found and set value in that column at that index to 1
+buildings_aggr_clean$Residential[(grepl("woonfunctie", buildings_aggr_clean$Gebruiksdo))] <- 1
+buildings_aggr_clean$Meeting[(grepl("bijeenkomstfunctie", buildings_aggr_clean$Gebruiksdo))] <- 1
+buildings_aggr_clean$Healthcare[(grepl("gezondheidszorgfunctie", buildings_aggr_clean$Gebruiksdo))] <- 1
+buildings_aggr_clean$Industry[(grepl("industriefunctie", buildings_aggr_clean$Gebruiksdo))] <- 1
+buildings_aggr_clean$Office[(grepl("kantoorfunctie", buildings_aggr_clean$Gebruiksdo))] <- 1
+buildings_aggr_clean$Accommodation[(grepl("logiesfunctie", buildings_aggr_clean$Gebruiksdo))] <- 1
+buildings_aggr_clean$Education[(grepl("onderwijsfunctie", buildings_aggr_clean$Gebruiksdo))] <- 1
+buildings_aggr_clean$Sport[(grepl("sportfunctie", buildings_aggr_clean$Gebruiksdo))] <- 1
+buildings_aggr_clean$Shop[(grepl("winkelfunctie", buildings_aggr_clean$Gebruiksdo))] <- 1
+buildings_aggr_clean$Other[(grepl("overige gebruiksfunctie", buildings_aggr_clean$Gebruiksdo))] <- 1
 
-result$BuildingID <- as.character(result$BuildingID)
+## Save BuildingID as text, because number is not correctly stored in excel if stored as a number
+buildings_aggr_clean$BuildingID <- as.character(buildings_aggr_clean$BuildingID)
 
-write.csv(result, file = "D:/Workspace/ExtraData/AddressBuildingAmsterdamConcatenated.csv")
+## Write data to .csv
+write.csv(buildings_aggr_clean, file = "D:/Workspace/ExtraData/AddressBuildingAmsterdamConcatenatedAdjLandUse.csv")
 ```
 
-```{r concatenateMultiLandUse}
-resultAdjLandUse <- aggregate(Gebruiksdo ~ BuildingID, data = Buildings, paste, collapse = ",")
+```{r concatenateFunctions2}
+## Aggregate building data including cell function
 
-namescolumns <- c("Residential", "Meeting", "Healthcare", "Industry", "Office", "Accommodation", "Education", "Sport", "Shop", "Other")
-for (name in namescolumns){
-  resultAdjLandUse[,name] <- 0
+## Aggregrate building data
+buildings_aggr <- aggregate(Gebruiksdo ~ BuildingID, data = buildings, paste, collapse = ",")
+
+## Check aggregated buildings
+str(buildings_aggr)
+
+names <- c("Residential", "Meeting", "Cell", "Healthcare", "Industry", "Office", "Accommodation", "Education", "Sport", "Shop", "Other")
+
+## For every column in names set all values in rows to zero
+for (name in names){
+  buildings_aggr[,name] <- 0
 }
 
-str(resultAdjLandUse)
-resultAdjLandUse$Residential[(grepl("woonfunctie", resultAdjLandUse$Gebruiksdo))] <- 1
-resultAdjLandUse$Meeting[(grepl("bijeenkomstfunctie", resultAdjLandUse$Gebruiksdo))] <- 1
-resultAdjLandUse$Healthcare[(grepl("gezondheidszorgfunctie", resultAdjLandUse$Gebruiksdo))] <- 1
-resultAdjLandUse$Industry[(grepl("industriefunctie", resultAdjLandUse$Gebruiksdo))] <- 1
-resultAdjLandUse$Office[(grepl("kantoorfunctie", resultAdjLandUse$Gebruiksdo))] <- 1
-resultAdjLandUse$Accommodation[(grepl("logiesfunctie", resultAdjLandUse$Gebruiksdo))] <- 1
-resultAdjLandUse$Education[(grepl("onderwijsfunctie", resultAdjLandUse$Gebruiksdo))] <- 1
-resultAdjLandUse$Sport[(grepl("sportfunctie", resultAdjLandUse$Gebruiksdo))] <- 1
-resultAdjLandUse$Shop[(grepl("winkelfunctie", resultAdjLandUse$Gebruiksdo))] <- 1
-resultAdjLandUse$Other[(grepl("overige gebruiksfunctie", resultAdjLandUse$Gebruiksdo))] <- 1
+## Make index in column where specific function is found and set value in that column at that index to 1
+buildings_aggr$Residential[(grepl("woonfunctie", buildings_aggr$Gebruiksdo))] <- 1
+buildings_aggr$Meeting[(grepl("bijeenkomstfunctie", buildings_aggr$Gebruiksdo))] <- 1
+buildings_aggr$Cell[(grepl("celfunctie", buildings_aggr$Gebruiksdo))] <- 1
+buildings_aggr$Healthcare[(grepl("gezondheidszorgfunctie", buildings_aggr$Gebruiksdo))] <- 1
+buildings_aggr$Industry[(grepl("industriefunctie", buildings_aggr$Gebruiksdo))] <- 1
+buildings_aggr$Office[(grepl("kantoorfunctie", buildings_aggr$Gebruiksdo))] <- 1
+buildings_aggr$Accommodation[(grepl("logiesfunctie", buildings_aggr$Gebruiksdo))] <- 1
+buildings_aggr$Education[(grepl("onderwijsfunctie", buildings_aggr$Gebruiksdo))] <- 1
+buildings_aggr$Sport[(grepl("sportfunctie", buildings_aggr$Gebruiksdo))] <- 1
+buildings_aggr$Shop[(grepl("winkelfunctie", buildings_aggr$Gebruiksdo))] <- 1
+buildings_aggr$Other[(grepl("overige gebruiksfunctie", buildings_aggr$Gebruiksdo))] <- 1
 
+## Save BuildingID as text, because number is not correctly stored in excel if stored as a number
+buildings_aggr$BuildingID <- as.character(buildings_aggr$BuildingID)
 
-resultAdjLandUse$BuildingID <- as.character(resultAdjLandUse$BuildingID)
-
-write.csv(resultAdjLandUse, file = "D:/Workspace/ExtraData/AddressBuildingAmsterdamConcatenatedAdjLandUse.csv")
+## Write data to .csv
+write.csv(buildings_aggr, file = "D:/Workspace/ExtraData/AddressBuildingAmsterdamConcatenated.csv")
 ```
+
+
 
 
