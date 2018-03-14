@@ -1,0 +1,2 @@
+"train_n","validation_n","test_n","kappa","precision","recall","computation_time(seconds)","test_accuracy","average_accuracy"
+"63901","21307","21142","0.2525054877082868","0.35005973715651134","0.2437603993344426","944","93.12742352485657","60.82392768989164"
