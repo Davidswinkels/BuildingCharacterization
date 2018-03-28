@@ -44,10 +44,10 @@ for building_class in building_classes:
           reader = csv.reader(stats_file)
           reader.next() # skip header or first row of file
           predicted_column_name = 'pred_' + building_class + '_' + fov + '_' + str(iteration)
+	  building_labels_testing[predicted_column_name] = building_labels_testing[building_class]
           for row in reader:
-            building_labels_testing[predicted_column_name] = building_labels_testing[building_class]
-            building_labels_testing.loc[building_labels_testing.BuildingID == int(row[0]), predicted_column_name] = (building_labels_testing[building_class] - 1)**2
-          building_labels_testing['misclass_sum'] = np.where((building_labels_testing[building_class] == building_labels_testing[predicted_column_name]), building_labels_testing['misclass_sum'] + 1, building_labels_testing['misclass_sum']) # if ground truth label and predicted label match, then add +1 to misclass_sum in that row, otherwise do not add anything
+            building_labels_testing.loc[building_labels_testing.BuildingID == int(row[0]), predicted_column_name] = ((building_labels_testing.loc[building_labels_testing.BuildingID == int(row[0]),building_class].item()) - 1)**2
+          building_labels_testing['misclass_sum'] = np.where((building_labels_testing[building_class] == building_labels_testing[predicted_column_name]), building_labels_testing['misclass_sum'], building_labels_testing['misclass_sum'] + 1) # if ground truth label and predicted label match, then do not add anything, otherwise add +1 to misclass_sum in that row
 
       
 building_labels_testing.to_csv(result_file_path)
