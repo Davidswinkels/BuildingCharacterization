@@ -1050,15 +1050,15 @@ def main(_):
 
     proport_correct = (float(conf_matrix[0][0]) + float(conf_matrix[1][1])) / (
         float(conf_matrix.at[('All','All')]))
-    prob_resid = (((float(conf_matrix[0][0]) + float(conf_matrix[1][0])) /
+    prob_class = (((float(conf_matrix[0][0]) + float(conf_matrix[1][0])) /
         float(conf_matrix.at[('All','All')]))) * (
         (float(conf_matrix[0][0]) + float(conf_matrix[0][1])) /
         float(conf_matrix.at[('All','All')]))
-    prob_non_resid = (((float(conf_matrix[0][1]) + float(conf_matrix[1][1])) /
+    prob_non_class = (((float(conf_matrix[0][1]) + float(conf_matrix[1][1])) /
         float(conf_matrix.at[('All','All')]))) * (
         (float(conf_matrix[1][0]) + float(conf_matrix[1][1])) /
         float(conf_matrix.at[('All','All')]))
-    prob_all = prob_resid + prob_non_resid
+    prob_all = prob_class + prob_non_class
     kappa = (proport_correct - prob_all) / (1 - prob_all)
 
     precision = conf_matrix[0][0] / conf_matrix[0]['All']
@@ -1250,7 +1250,8 @@ if __name__ == '__main__':
   # Creating input variables
   iterations = [0, 1, 2, 3]
   #building_classes_all = ['Residentia', 'Meeting', 'Healthcare', 'Industry', 'Office','Accommodat', 'Education', 'Sport', 'Shop', 'Other']
-  building_classes = ['Residentia', 'Meeting', 'Industry', 'Office', 'Shop']
+  #building_classes = ['Residentia', 'Meeting', 'Industry', 'Office', 'Shop']
+  building_classes = ['Meeting', 'Industry', 'Office', 'Shop']
   architectures = ['inception_v3','mobilenet_1.0_224']
   fovs = ['F30', 'F60', 'F90', 'F30_60_90']
 
