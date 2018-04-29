@@ -13,8 +13,8 @@ import random
 import re
 import sys
 import tarfile
-import imghdr
 import csv
+import collections
 
 import numpy as np
 import pandas as pd
@@ -248,7 +248,7 @@ def create_image_lists(image_dir, building_class, fov , iteration):
         non_class_testing_images += filepaths
   class_label_name = re.sub(r'[^a-z0-9]+', ' ', building_class.lower())
   non_class_label_name = "non_" + class_label_name
-  result = {}
+  result = collections.OrderedDict()
   result[class_label_name] = {
     'dir': class_label_name,
     'training': class_training_images,
@@ -881,6 +881,25 @@ def add_jpeg_decoding(input_width, input_height, input_depth, input_mean,
 
 def days_hours_minutes_seconds(td):
   return td.days, td.seconds//3600, (td.seconds//60)%60, td.seconds%60
+
+# create weights for classes
+def calculateClassWeight(num_labels,idxs_samples_train,labels):
+  class_weight_values = np.zeros((1,num_labels), dtype=np.float)
+  array_num_train_samples_per_label = np.zeros(num_labels)
+  num_train_samples = len(idxs_samples_train)
+  for i in range(num_train_samples):
+    idx_sample = idxs_samples_train[i]
+    sample_label = labels[idx_sample]
+    array_num_train_samples_per_label[sample_label] += 1
+  for i in range(num_labels):
+    class_weight_values[0,i] = (1.0 / array_num_train_samples_per_label[i])
+  max_weight_value = np.max(class_weight_values)
+  for i in range(num_labels):
+    class_weight_values[0,i] = class_weight_values[0,i] / float(max_weight_value)
+  print("class_weight_values")
+  print(class_weight_values) #  size of the array is that of the number of final combined classes
+  return class_weight_values
+
 
 def main(_):
 
