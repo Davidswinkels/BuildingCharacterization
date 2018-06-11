@@ -646,14 +646,14 @@ def add_final_training_ops(class_count, final_tensor_name, bottleneck_tensor,
         name='BottleneckInputPlaceholder')
 
     ground_truth_input = tf.placeholder(
-        tf.int32, [[FLAGS.train_batch_size, 2]], name='GroundTruthInput')
+        tf.float32, [FLAGS.train_batch_size, 2], name='GroundTruthInput')
 
   # Organizing the following ops as `final_training_ops` so they're easier
   # to see in TensorBoard
   layer_name = 'final_training_ops'
   with tf.name_scope(layer_name):
     with tf.name_scope('weights'):
-      class_weight_values = np.zeros((1, 2), dtype=np.int32)
+      class_weight_values = np.zeros((1, 2), dtype=np.float32)
       weight_per_sample = tf.transpose(tf.matmul(ground_truth_input, tf.transpose(class_weight_values)))
       variable_summaries(weight_per_sample)
     with tf.name_scope('biases'):
@@ -661,7 +661,7 @@ def add_final_training_ops(class_count, final_tensor_name, bottleneck_tensor,
       variable_summaries(layer_biases)
 
     with tf.name_scope('Wx_plus_b'):
-      logits = tf.matmul(bottleneck_input, layer_weights) + layer_biases
+      logits = tf.matmul(bottleneck_input, weight_per_sample) + layer_biases
       tf.summary.histogram('pre_activations', logits)
 
   final_tensor = tf.nn.softmax(logits, name=final_tensor_name)
