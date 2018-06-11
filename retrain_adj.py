@@ -535,7 +535,6 @@ def cache_bottlenecks(sess, image_lists, image_dir, bottleneck_dir,
           tf.logging.info(
               str(how_many_bottlenecks) + ' bottleneck files created.')
 
-
 def get_random_cached_bottlenecks(sess, image_lists, how_many, category,
                                   bottleneck_dir, image_dir, jpeg_data_tensor,
                                   decoded_image_tensor, resized_input_tensor,
@@ -615,7 +614,7 @@ def variable_summaries(var):
 
 
 def add_final_training_ops(class_count, final_tensor_name, bottleneck_tensor,
-                           bottleneck_tensor_size, quantize_layer):
+                           bottleneck_tensor_size):
   """Adds a new softmax and fully-connected layer for training.
 
   We need to retrain the top layer to identify our new classes, so this function
@@ -631,8 +630,6 @@ def add_final_training_ops(class_count, final_tensor_name, bottleneck_tensor,
     final_tensor_name: Name string for the new final node that produces results.
     bottleneck_tensor: The output of the main CNN graph.
     bottleneck_tensor_size: How many entries in the bottleneck vector.
-    quantize_layer: Boolean, specifying whether the newly added layer should be
-        quantized.
 
   Returns:
     The tensors for the training and cross entropy results, and tensors for the
@@ -655,37 +652,14 @@ def add_final_training_ops(class_count, final_tensor_name, bottleneck_tensor,
       initial_value = tf.truncated_normal(
           [bottleneck_tensor_size, class_count], stddev=0.001)
       layer_weights = tf.Variable(initial_value, name='final_weights')
-      if quantize_layer:
-        quantized_layer_weights = quant_ops.MovingAvgQuantize(
-            layer_weights, is_training=True)
-        variable_summaries(quantized_layer_weights)
-
       variable_summaries(layer_weights)
     with tf.name_scope('biases'):
       layer_biases = tf.Variable(tf.zeros([class_count]), name='final_biases')
-      if quantize_layer:
-        quantized_layer_biases = quant_ops.MovingAvgQuantize(
-            layer_biases, is_training=True)
-        variable_summaries(quantized_layer_biases)
-
       variable_summaries(layer_biases)
 
     with tf.name_scope('Wx_plus_b'):
-      if quantize_layer:
-        logits = tf.matmul(bottleneck_input,
-                           quantized_layer_weights) + quantized_layer_biases
-        logits = quant_ops.MovingAvgQuantize(
-            logits,
-            init_min=-32.0,
-            init_max=32.0,
-            is_training=True,
-            num_bits=8,
-            narrow_range=False,
-            ema_decay=0.5)
-        tf.summary.histogram('pre_activations', logits)
-      else:
-        logits = tf.matmul(bottleneck_input, layer_weights) + layer_biases
-        tf.summary.histogram('pre_activations', logits)
+      logits = tf.matmul(bottleneck_input, layer_weights) + layer_biases
+      tf.summary.histogram('pre_activations', logits)
 
   final_tensor = tf.nn.softmax(logits, name=final_tensor_name)
 
@@ -881,25 +855,6 @@ def add_jpeg_decoding(input_width, input_height, input_depth, input_mean,
 
 def days_hours_minutes_seconds(td):
   return td.days, td.seconds//3600, (td.seconds//60)%60, td.seconds%60
-
-# create weights for classes
-def calculateClassWeight(num_labels,idxs_samples_train,labels):
-  class_weight_values = np.zeros((1,num_labels), dtype=np.float)
-  array_num_train_samples_per_label = np.zeros(num_labels)
-  num_train_samples = len(idxs_samples_train)
-  for i in range(num_train_samples):
-    idx_sample = idxs_samples_train[i]
-    sample_label = labels[idx_sample]
-    array_num_train_samples_per_label[sample_label] += 1
-  for i in range(num_labels):
-    class_weight_values[0,i] = (1.0 / array_num_train_samples_per_label[i])
-  max_weight_value = np.max(class_weight_values)
-  for i in range(num_labels):
-    class_weight_values[0,i] = class_weight_values[0,i] / float(max_weight_value)
-  print("class_weight_values")
-  print(class_weight_values) #  size of the array is that of the number of final combined classes
-  return class_weight_values
-
 
 def main(_):
 
