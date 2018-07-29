@@ -998,7 +998,7 @@ def main(_):
         feed_dict={bottleneck_input: test_bottlenecks,
         ground_truth_input: test_ground_truth})
 
-    # Testing accuracy of predictions with statistics: 
+    # Testing accuracy of predictions with statistics:
     # overall test accuracy, average accuracy, confusion matrix, kappa stats,
     # precision, recall, computation time, wrongly predicted building ID
     test_ground_truth_pd = pd.Series(test_ground_truth, name = "Actual")
