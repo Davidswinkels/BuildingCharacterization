@@ -635,31 +635,26 @@ def add_final_training_ops(class_count, final_tensor_name, bottleneck_tensor,
     The tensors for the training and cross entropy results, and tensors for the
     bottleneck input and ground truth input.
   """
-  num_labels = 2 # num_labels = total number of classes
-  gamma = 2
-  alpha = 0.25
-
   with tf.name_scope('input'):
     bottleneck_input = tf.placeholder_with_default(
-        tf.cast(bottleneck_tensor, tf.float32),
+        bottleneck_tensor,
         shape=[None, bottleneck_tensor_size],
         name='BottleneckInputPlaceholder')
 
     ground_truth_input = tf.placeholder(
-        tf.float32, [None], name='GroundTruthInput')
+        tf.int64, [None], name='GroundTruthInput')
 
   # Organizing the following ops as `final_training_ops` so they're easier
   # to see in TensorBoard
   layer_name = 'final_training_ops'
   with tf.name_scope(layer_name):
     with tf.name_scope('weights'):
-      initial_value = tf.truncated_normal([bottleneck_tensor_size,
-                                           class_count], stddev=0.001, dtype=tf.float32)
+      initial_value = tf.truncated_normal(
+          [bottleneck_tensor_size, class_count], stddev=0.001)
       layer_weights = tf.Variable(initial_value, name='final_weights')
       variable_summaries(layer_weights)
-
     with tf.name_scope('biases'):
-      layer_biases = tf.Variable(tf.zeros([class_count], dtype=tf.float32), name='final_biases')
+      layer_biases = tf.Variable(tf.zeros([class_count]), name='final_biases')
       variable_summaries(layer_biases)
 
     with tf.name_scope('Wx_plus_b'):
@@ -671,12 +666,8 @@ def add_final_training_ops(class_count, final_tensor_name, bottleneck_tensor,
   tf.summary.histogram('activations', final_tensor)
 
   with tf.name_scope('cross_entropy'):
-    cross_entropy = -(ground_truth_input * tf.log(final_tensor))
-    focal_loss_term = tf.pow((1 - final_tensor), gamma)
-    cross_entropy = tf.multiply(focal_loss_term, cross_entropy)
-    cross_entropy = tf.reduce_sum(cross_entropy, 1)
-    cross_entropy = tf.multiply(layer_weights, cross_entropy)
-    cross_entropy_mean = tf.reduce_mean(cross_entropy)
+    cross_entropy_mean = tf.losses.sparse_softmax_cross_entropy(
+        labels=ground_truth_input, logits=logits)
 
   tf.summary.scalar('cross_entropy', cross_entropy_mean)
 
@@ -926,7 +917,7 @@ def main(_):
     (train_step, cross_entropy, bottleneck_input, ground_truth_input,
      final_tensor) = add_final_training_ops(
          len(image_lists.keys()), FLAGS.final_tensor_name, bottleneck_tensor,
-         model_info['bottleneck_tensor_size'])
+         model_info['bottleneck_tensor_size'], model_info['quantize_layer'])
 
     # Create the operations we need to evaluate the accuracy of our new layer.
     evaluation_step, prediction = add_evaluation_step(
@@ -1007,7 +998,7 @@ def main(_):
         feed_dict={bottleneck_input: test_bottlenecks,
         ground_truth_input: test_ground_truth})
 
-    # Testing accuracy of predictions with statistics: 
+    # Testing accuracy of predictions with statistics:
     # overall test accuracy, average accuracy, confusion matrix, kappa stats,
     # precision, recall, computation time, wrongly predicted building ID
     test_ground_truth_pd = pd.Series(test_ground_truth, name = "Actual")
