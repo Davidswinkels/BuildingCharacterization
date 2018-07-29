@@ -9,11 +9,21 @@ from __future__ import print_function
 import csv
 import os
 import pandas as pd
-import numpy as np
 import ast
+from dateutil import relativedelta as rdelta
+from datetime import date
 
 def strRound(number1, number2):
   return str(round(number1, 2)) + ' (' + str(round(number2, 2)) + ')'
+
+dateText = "2016y08m"
+def calcDateTime(dateText):
+  year = dateText[:4]
+  month = dateText[5:7]
+  dateDifference = date(2016,11,1) - date(int(year), int(month), 1)
+  return(dateDifference.days)
+
+calcDateTime(dateText)
 
 print('Workspace:', os.getcwd())
 
@@ -25,12 +35,14 @@ architectures = ['inception_v3']
 fovs = ['F30', 'F60', 'F90', 'F30_60_90']
 inputFilePath = './result/BuildingPointsPredictedLabels.csv'
 outputDistFilePath = './result/DistanceCorrectPredictions.csv'
-outputAgeFilePath = './result/AgeCorrectPredictions.csv'
-
+outputBuildAgeFilePath = './result/BuildAgeCorrectPredictions.csv'
+outputImageAgeFilePath = './result/ImageAgeCorrectPredictions.csv'
 
 # building_labels_testing.to_csv(result_file_path)
 print('Load file of misclassified images from:', inputFilePath)
 predictedImages = pd.read_csv(inputFilePath)
+
+print(predictedImages.columns.values)
 
 ## Calculate distance from strings to integers
 predictedImages['distance'] = predictedImages['distance'].str.replace(' m', '')
@@ -39,11 +51,13 @@ predictedImages['distance'] = pd.to_numeric(predictedImages['distance'])
 
 
 predictedImages['Bouwjaar'] = 2016 - predictedImages['Bouwjaar']
-print(predictedImages.columns.values)
+
+predictedImages['pano_date'] = predictedImages['pano_date'].apply(calcDateTime)
 
 
 outputDistData = {}
-outputAgeData = {}
+outputBuildAgeData = {}
+outputImageAgeData = {}
 
 ## Append information from every model to csv file
 for buildingClass in buildingClasses:
@@ -51,8 +65,10 @@ for buildingClass in buildingClasses:
   outputIncorrectColumnName = buildingClass[:4] + 'Incorrect'
   DistAvgCorrList = []
   DistAvgIncorrList = []
-  AgeAvgCorrList = []
-  AgeAvgIncorrList = []
+  BuildingAgeAvgCorrList = []
+  BuildingAgeAvgIncorrList = []
+  ImageAgeAvgCorrList = []
+  ImageAgeAvgIncorrList = []
   for fov in fovs:
     for architecture in architectures:
       for iteration in iterations:
@@ -62,27 +78,43 @@ for buildingClass in buildingClasses:
         corrDistStd = predictedImages['distance'].where(predictedImages[buildingClass] == predictedImages[predictedColumnName]).dropna().std()
         incorrDistAvg = predictedImages['distance'].where(predictedImages[buildingClass] != predictedImages[predictedColumnName]).dropna().mean()
         incorrDistStd = predictedImages['distance'].where(predictedImages[buildingClass] != predictedImages[predictedColumnName]).dropna().std()
-        corrAgeAvg = predictedImages['Bouwjaar'].where(predictedImages[buildingClass] == predictedImages[predictedColumnName]).dropna().mean()
-        corrAgeStd = predictedImages['Bouwjaar'].where(predictedImages[buildingClass] == predictedImages[predictedColumnName]).dropna().std()
-        incorrAgeAvg = predictedImages['Bouwjaar'].where(predictedImages[buildingClass] != predictedImages[predictedColumnName]).dropna().mean()
-        incorrAgeStd = predictedImages['Bouwjaar'].where(predictedImages[buildingClass] != predictedImages[predictedColumnName]).dropna().std()
+        corrBuildAgeAvg = predictedImages['Bouwjaar'].where(predictedImages[buildingClass] == predictedImages[predictedColumnName]).dropna().mean()
+        corrBuildAgeStd = predictedImages['Bouwjaar'].where(predictedImages[buildingClass] == predictedImages[predictedColumnName]).dropna().std()
+        incorrBuildAgeAvg = predictedImages['Bouwjaar'].where(predictedImages[buildingClass] != predictedImages[predictedColumnName]).dropna().mean()
+        incorrBuildAgeStd = predictedImages['Bouwjaar'].where(predictedImages[buildingClass] != predictedImages[predictedColumnName]).dropna().std()
+        corrImageAgeAvg = predictedImages['pano_date'].where(predictedImages[buildingClass] == predictedImages[predictedColumnName]).dropna().mean()
+        corrImageAgeStd = predictedImages['pano_date'].where(predictedImages[buildingClass] == predictedImages[predictedColumnName]).dropna().std()
+        incorrImageAgeAvg = predictedImages['pano_date'].where(predictedImages[buildingClass] != predictedImages[predictedColumnName]).dropna().mean()
+        incorrImageAgeStd = predictedImages['pano_date'].where(predictedImages[buildingClass] != predictedImages[predictedColumnName]).dropna().std()
         DistAvgCorrList.append(strRound(corrDistAvg, corrDistStd))
         DistAvgIncorrList.append(strRound(incorrDistAvg, incorrDistStd))
-        AgeAvgCorrList.append(strRound(corrAgeAvg, corrAgeStd))
-        AgeAvgIncorrList.append(strRound(incorrAgeAvg, incorrAgeStd))
+        BuildingAgeAvgCorrList.append(strRound(corrBuildAgeAvg, corrBuildAgeStd))
+        BuildingAgeAvgIncorrList.append(strRound(incorrBuildAgeAvg, incorrBuildAgeStd))
+        ImageAgeAvgCorrList.append(strRound(corrImageAgeAvg, corrImageAgeStd))
+        ImageAgeAvgIncorrList.append(strRound(incorrImageAgeAvg, incorrImageAgeStd))
   outputDistData[outputCorrectColumnName] = DistAvgCorrList
   outputDistData[outputIncorrectColumnName] = DistAvgIncorrList
-  outputAgeData[outputCorrectColumnName] = AgeAvgCorrList
-  outputAgeData[outputIncorrectColumnName] = AgeAvgIncorrList
+  outputBuildAgeData[outputCorrectColumnName] = BuildingAgeAvgCorrList
+  outputBuildAgeData[outputIncorrectColumnName] = BuildingAgeAvgIncorrList
+  outputImageAgeData[outputCorrectColumnName] = ImageAgeAvgCorrList
+  outputImageAgeData[outputIncorrectColumnName] = ImageAgeAvgIncorrList
 
 print(outputDistData)
-print(outputAgeData)
+print(outputBuildAgeData)
+print(outputImageAgeData)
+print(predictedImages['distance'].mean())
+print(predictedImages['distance'].std())
 print(predictedImages['Bouwjaar'].mean())
 print(predictedImages['Bouwjaar'].std())
+print(predictedImages['pano_date'].mean())
+print(predictedImages['pano_date'].std())
+
 distDF = pd.DataFrame(data=outputDistData)
-ageDF = pd.DataFrame(data=outputAgeData)
+ageBuildingDF = pd.DataFrame(data=outputBuildAgeData)
+ageImageDF = pd.DataFrame(data=outputImageAgeData)
+
 
 distDF.to_csv(outputDistFilePath)
-ageDF.to_csv(outputAgeFilePath)
-
+ageBuildingDF.to_csv(outputBuildAgeFilePath)
+ageImageDF.to_csv(outputImageAgeFilePath)
 
