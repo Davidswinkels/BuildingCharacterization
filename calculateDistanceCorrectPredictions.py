@@ -37,8 +37,8 @@ predictedImages['distance'] = predictedImages['distance'].str.replace(' m', '')
 predictedImages['distance'].apply(ast.literal_eval)
 predictedImages['distance'] = pd.to_numeric(predictedImages['distance'])
 
-print(type(predictedImages['Bouwjaar'].iloc[0]))
-print(type(predictedImages['heading'].iloc[0]))
+
+predictedImages['Bouwjaar'] = 2016 - predictedImages['Bouwjaar']
 print(predictedImages.columns.values)
 
 
@@ -77,12 +77,12 @@ for buildingClass in buildingClasses:
 
 print(outputDistData)
 print(outputAgeData)
-
+print(predictedImages['Bouwjaar'].mean())
+print(predictedImages['Bouwjaar'].std())
 distDF = pd.DataFrame(data=outputDistData)
 ageDF = pd.DataFrame(data=outputAgeData)
 
 distDF.to_csv(outputDistFilePath)
 ageDF.to_csv(outputAgeFilePath)
-
 
 
