@@ -641,27 +641,29 @@ def add_final_training_ops(class_count, final_tensor_name, bottleneck_tensor,
 
   with tf.name_scope('input'):
     bottleneck_input = tf.placeholder_with_default(
-        bottleneck_tensor,
+        tf.cast(bottleneck_tensor, tf.float32),
         shape=[None, bottleneck_tensor_size],
         name='BottleneckInputPlaceholder')
 
     ground_truth_input = tf.placeholder(
-        tf.float32, [FLAGS.train_batch_size, 2], name='GroundTruthInput')
+        tf.float32, [None], name='GroundTruthInput')
 
   # Organizing the following ops as `final_training_ops` so they're easier
   # to see in TensorBoard
   layer_name = 'final_training_ops'
   with tf.name_scope(layer_name):
     with tf.name_scope('weights'):
-      class_weight_values = np.zeros((1, 2), dtype=np.float32)
-      weight_per_sample = tf.transpose(tf.matmul(ground_truth_input, tf.transpose(class_weight_values)))
-      variable_summaries(weight_per_sample)
+      initial_value = tf.truncated_normal([bottleneck_tensor_size,
+                                           class_count], stddev=0.001, dtype=tf.float32)
+      layer_weights = tf.Variable(initial_value, name='final_weights')
+      variable_summaries(layer_weights)
+
     with tf.name_scope('biases'):
-      layer_biases = tf.Variable(tf.zeros([class_count]), name='final_biases')
+      layer_biases = tf.Variable(tf.zeros([class_count], dtype=tf.float32), name='final_biases')
       variable_summaries(layer_biases)
 
     with tf.name_scope('Wx_plus_b'):
-      logits = tf.matmul(bottleneck_input, weight_per_sample) + layer_biases
+      logits = tf.matmul(bottleneck_input, layer_weights) + layer_biases
       tf.summary.histogram('pre_activations', logits)
 
   final_tensor = tf.nn.softmax(logits, name=final_tensor_name)
@@ -673,7 +675,7 @@ def add_final_training_ops(class_count, final_tensor_name, bottleneck_tensor,
     focal_loss_term = tf.pow((1 - final_tensor), gamma)
     cross_entropy = tf.multiply(focal_loss_term, cross_entropy)
     cross_entropy = tf.reduce_sum(cross_entropy, 1)
-    cross_entropy = tf.multiply(weight_per_sample, cross_entropy)
+    cross_entropy = tf.multiply(layer_weights, cross_entropy)
     cross_entropy_mean = tf.reduce_mean(cross_entropy)
 
   tf.summary.scalar('cross_entropy', cross_entropy_mean)
