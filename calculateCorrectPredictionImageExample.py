@@ -48,7 +48,7 @@ for imagePos in randomImagePos:
   predictionDF = pd.DataFrame(data=predictionData, columns = buildingClasses)
   buildingID = '_B' + str(predictedImages['BuildingID'].iloc[imagePos])
   panoID = '_P' + str(predictedImages['BuildingID'].iloc[imagePos])
-  outputFilePath = outputFileStem + str(imagePos) +  '.csv'
+  outputFilePath = outputFileStem + str(imagePos) + buildingID + panoID + '.csv'
   predictionDF.to_csv(outputFilePath)
   print(predictionDF.head())
 
