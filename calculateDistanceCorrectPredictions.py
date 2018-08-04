@@ -16,14 +16,12 @@ from datetime import date
 def strRound(number1, number2):
   return str(round(number1, 2)) + ' (' + str(round(number2, 2)) + ')'
 
-dateText = "2016y08m"
 def calcDateTime(dateText):
   year = dateText[:4]
   month = dateText[5:7]
   dateDifference = date(2016,11,1) - date(int(year), int(month), 1)
   return(dateDifference.days)
 
-calcDateTime(dateText)
 
 print('Workspace:', os.getcwd())
 
