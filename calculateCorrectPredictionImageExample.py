@@ -76,9 +76,11 @@ for posID in selectImageID:
     print(predictionBuildingClassList)
     predictionData[buildingClass] = predictionBuildingClassList
   predictionDF = pd.DataFrame(data=predictionData, columns = buildingClasses)
-  buildingID = '_B' + str(predictedImages['BuildingID'].iloc[imagePos])
-  panoID = '_P' + str(predictedImages['BuildingID'].iloc[imagePos])
-  outputFilePath = outputFileStem + str(posID) + buildingID + panoID + '.csv'
+  buildingID = '_B' + str(predictedImages['BuildingID'].iloc[imagePos].values[0])
+  panoID = '_P' + str(predictedImages['pano_id'].iloc[imagePos].values[0])
+  neighID = '_N' + str(predictedImages['BU_CODE'].iloc[imagePos].values[0])[-4:]
+  print(neighID)
+  outputFilePath = outputFileStem + str(posID) + str(buildingID) + str(panoID) + str(neighID) + '.csv'
   predictionDF.to_csv(outputFilePath)
   print(predictionDF.head())
 
