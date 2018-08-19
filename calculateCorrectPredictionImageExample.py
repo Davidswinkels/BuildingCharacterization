@@ -72,7 +72,7 @@ for posID in selectImageID:
         print(predictedValue)
         if int(predictedValue) == int(measuredValue):
           countCorrectPredictions += 1
-      predictionBuildingClassList.append(countCorrectPredictions)
+      predictionBuildingClassList.append(str(countCorrectPredictions) + '/4')
     print(predictionBuildingClassList)
     predictionData[buildingClass] = predictionBuildingClassList
   predictionDF = pd.DataFrame(data=predictionData, columns = buildingClasses)
@@ -81,7 +81,7 @@ for posID in selectImageID:
   neighID = '_N' + str(predictedImages['BU_CODE'].iloc[imagePos].values[0])[-4:]
   print(neighID)
   outputFilePath = outputFileStem + str(posID) + str(buildingID) + str(panoID) + str(neighID) + '.csv'
-  predictionDF.to_csv(outputFilePath)
+  predictionDF.to_csv(outputFilePath, index=False)
   print(predictionDF.head())
 
 
