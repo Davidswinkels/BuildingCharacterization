@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-## Import libraries
+# Import libraries
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -13,7 +13,7 @@ import re
 import os
 import pandas
 
-## Create function to check if image is jpeg
+
 def check_image_jpeg(image_dir):
   """Check if jpg files are correct.
 
@@ -38,7 +38,6 @@ def check_image_jpeg(image_dir):
       os.remove(image_path)
       print('Image has been removed from directory.')
 
-## Create function to check if image is at location
 def check_image_exists(base_image_dir):
   """Check if jpg files are correct.
 
@@ -67,22 +66,13 @@ base_image_dir = '/home/david/Documents/streetview-master/data'
 # Load csv into pandas dataframe
 building_points = pandas.read_csv(input_file)
 
-## Optional checks
-# Check header dataframe
-#print(list(building_points))
-
-# Check unique building codes in BU_CODE column
-#print(building_points.BU_CODE.unique())
-
 # Create new column in building points to set if image is valid or not
 building_points.loc[:, 'valid_jpg'] = 'Yes'
 building_points.loc[:, 'image_exists'] = 'Yes'
 
-
 # Check every repository of images ordered per neighbourhood
 for BU_CODE in building_points.BU_CODE.unique():
   image_dir = base_image_dir + '/' + BU_CODE[-4:]
-  print(image_dir)
   check_image_jpeg(image_dir = image_dir)
 
 check_image_exists(base_image_dir)

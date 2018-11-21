@@ -283,8 +283,8 @@ def download_streetview_loop(input_csv, result_csv, iterations, start_iteration)
         pano_id, pano_lat, pano_lon, pano_date, heading = download_streetview(lat_object = df['POINT_Y'][i], lon_object = df['POINT_X'][i], neighbourhood_id = df['BU_CODE'][i], building_id = df['BuildingID'][i])
         df_result = pd.read_csv(result_csv, sep = ',', header = 0) 
         if pano_id == "N/A":
-            df_result.set_value(index = i, col = ['state_download'], value = "Download tried")
-            df_result.set_value(index = i, col = ['state_error'], value = "Download fail")
+            df_result.set_value(index=i, col=['state_download'], value = "Download tried")
+            df_result.set_value(index=i, col=['state_error'], value = "Download fail")
             download_text = "Unsuccessful download"
         else:
             filename = "N" + df['BU_CODE'][i] + "_B" + str(df['BuildingID'][i]) + "_P" + pano_id
@@ -311,17 +311,19 @@ def download_streetview_loop(input_csv, result_csv, iterations, start_iteration)
             label = str(df['Residentia'][i]) + "\n" + str(df['Meeting'][i]) + "\n" + str(df['Healthcare'][i]) + "\n" + str(df['Industry'][i]) + "\n" + str(df['Office'][i]) + "\n" + str(df['Accommodat'][i])+ "\n" + str(df['Education'][i]) + "\n" + str(df['Sport'][i])   + "\n" + str(df['Shop'][i]) + "\n" + str(df['Other'][i])
             with open(label_saveloc, "w") as label_file:
                 label_file.write(label)
-            df_result.set_value(index = i, col = ['state_download'], value = "Download tried")
-            df_result.set_value(index = i, col = ['state_error'], value = "Download success")
-            df_result.set_value(index = i, col = ['pano_id'], value = pano_id)
-            df_result.set_value(index = i, col = ['pano_date'], value = pano_date)
-            df_result.set_value(index = i, col = ['pano_lat'], value = pano_lat)
-            df_result.set_value(index = i, col = ['pano_lon'], value = pano_lon)
-            df_result.set_value(index = i, col = ['distance'], value = distance)
-            df_result.set_value(index = i, col = ['heading'], value = round(heading,2))
+            df_result.set_value(index=i, col=['state_download'], value="Download tried")
+            df_result.set_value(index=i, col=['state_error'], value="Download success")
+            df_result.set_value(index=i, col=['pano_id'], value=pano_id)
+            df_result.set_value(index=i, col=['pano_date'], value=pano_date)
+            df_result.set_value(index=i, col=['pano_lat'], value=pano_lat)
+            df_result.set_value(index=i, col=['pano_lon'], value=pano_lon)
+            df_result.set_value(index=i, col=['distance'], value=distance)
+            df_result.set_value(index=i, col=['heading'], value=round(heading,2))
             download_text = "Successful download"
         df_result.to_csv(path_or_buf = result_csv, sep = ',', index = False)
         print download_text
+
+download_streetview_loop(input_csv=input_csv, result_csv=result_csv, iterations=iterations, start_iteration=start_iteration)
 
 #Write CSV file
 #df_result = pd.read_csv('./input/building_points.csv', sep = ',', header = 0)
@@ -334,8 +336,6 @@ def download_streetview_loop(input_csv, result_csv, iterations, start_iteration)
 #df_result['distance'] = "Not available"
 #df_result['heading'] = 0.00
 #df_result.to_csv(path_or_buf = './data/building_points_error35257.csv', sep = ',')
-
-download_streetview_loop(input_csv = input_csv, result_csv = result_csv, iterations = iterations, start_iteration = start_iteration)
 
 ## Test:read dataframe building points
 #import pandas as pd

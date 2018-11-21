@@ -37,6 +37,7 @@ MAX_NUM_IMAGES_PER_CLASS = 2 ** 27 - 1  # ~134M
 input_file = "./input/BuildingPointsValidImages.csv"
 building_points = pd.read_csv(input_file)
 
+
 def create_image_lists(image_dir = '/home/david/Documents/streetview-master/data', building_class = 'Residentia', fov = 'F30'):
   """Builds a list of training, validation and testing images from the file system.
   Analyzes the sub folders in the image directory, splits them into stable

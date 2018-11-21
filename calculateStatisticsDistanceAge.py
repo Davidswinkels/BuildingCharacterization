@@ -40,73 +40,43 @@ outputDistFilePath = './result/DistanceCorrectPredictions.csv'
 outputBuildAgeFilePath = './result/BuildAgeCorrectPredictions.csv'
 outputImageAgeFilePath = './result/ImageAgeCorrectPredictions.csv'
 
-# building_labels_testing.to_csv(result_file_path)
+# Load predicted labels of building functions
 print('Load file of misclassified images from:', inputFilePath)
 predictedImages = pd.read_csv(inputFilePath)
-
 print(predictedImages.columns.values)
 
+# Calculate distance, building age and image age to correct formats
 predictedImages['distance'] = predictedImages['distance'].str.replace(' m', '')
 predictedImages['distance'].apply(ast.literal_eval)
 predictedImages['distance'] = pd.to_numeric(predictedImages['distance'])
 predictedImages['buildingAge'] = 2016 - predictedImages['Bouwjaar']
 predictedImages['imageAge'] = predictedImages['pano_date'].apply(calcDateTime)
 
-# x = predictedImages[['distance', 'buildingAge', 'imageAge']]
-# print(x.columns.values)
-#
-# lm = LinearRegression()
-# lm.fit(x, predictedImages['CorrectPredictions'])
-#
-# print(lm.intercept_)
-# print(len(lm.coef_))
-#
-# regressionOutput = pd.DataFrame(zip(x.columns, lm.coef_), columns = ['features', 'estimatedCoefficients'])
-# print(regressionOutput.head())
-#
-# plt.scatter(predictedImages.distance, predictedImages.CorrectPredictions)
-# plt.title("Distance versus correct predictions")
-# plt.show()
-# plt.scatter(predictedImages.buildingAge, predictedImages.CorrectPredictions)
-# plt.title("Building age versus correct predictions")
-# plt.show()
-# plt.scatter(predictedImages.imageAge, predictedImages.CorrectPredictions)
-# plt.title("Image age versus correct predictions")
-# plt.show()
-# plt.scatter(predictedImages.imageAge, predictedImages.distance)
-# plt.title("Image age versus correct distance")
-# plt.show()
-# plt.scatter(predictedImages.imageAge, predictedImages.buildingAge)
-# plt.title("Image age versus correct building age")
-# plt.show()
-
+# Calculate correct predictions
 predictedImages['CorrectPredictions'] = 80 - predictedImages['misclass_sum']
 correctPredictionsMean = predictedImages['CorrectPredictions'].mean()
 predictedImages['CorrectPredictionsCategory'] = "Correct"
 predictedImages.loc[predictedImages.CorrectPredictions<=correctPredictionsMean, 'CorrectPredictionsCategory'] = "Incorrect"
 print(predictedImages['CorrectPredictionsCategory'].value_counts())
 
-
+# Perform T tests with distance, building age and image age as independent variables and correct predictions as dependent variable
 t2, p2 = stats.ttest_ind(predictedImages['distance'].where(predictedImages["CorrectPredictionsCategory"] == "Correct").dropna(),
                          predictedImages['distance'].where(predictedImages["CorrectPredictionsCategory"] == "Incorrect").dropna())
-print("t = " + str(t2))
-print("p = " + str(p2))
+print("Distance: t = " + str(t2))
+print("Distance: p = " + str(p2))
 
 t2, p2 = stats.ttest_ind(predictedImages['buildingAge'].where(predictedImages["CorrectPredictionsCategory"] == "Correct").dropna(),
                          predictedImages['buildingAge'].where(predictedImages["CorrectPredictionsCategory"] == "Incorrect").dropna())
-print("t = " + str(t2))
-print("p = " + str(p2))
+print("Building age: t = " + str(t2))
+print("Building age: p = " + str(p2))
 
 t2, p2 = stats.ttest_ind(predictedImages['imageAge'].where(predictedImages["CorrectPredictionsCategory"] == "Correct").dropna(),
                          predictedImages['imageAge'].where(predictedImages["CorrectPredictionsCategory"] == "Incorrect").dropna())
-print("t = " + str(t2))
-print("p = " + str(p2))
+print("Image age: t = " + str(t2))
+print("Image age: p = " + str(p2))
 
-# values = predictedImages['BU_CODE'].value_counts()
-# values = values.loc[values.values > 10]
-# for index, value in values.iteritems():
-#   print("predictedImages['CorrectPredictions'].where(predictedImages['BU_CODE'] == '" + index + "').dropna(),")
 
+# Perform ANOVA with neighbourhoods as independent variable and correct predictions as dependent variable
 f, p = stats.f_oneway(predictedImages['CorrectPredictions'].where(predictedImages['BU_CODE'] == 'BU03636501').dropna(),
                       predictedImages['CorrectPredictions'].where(predictedImages['BU_CODE'] == 'BU03638402').dropna(),
                       predictedImages['CorrectPredictions'].where(predictedImages['BU_CODE'] == 'BU03637803').dropna(),
@@ -204,7 +174,7 @@ f, p = stats.f_oneway(predictedImages['CorrectPredictions'].where(predictedImage
                       predictedImages['CorrectPredictions'].where(predictedImages['BU_CODE'] == 'BU03639502').dropna(),
                       predictedImages['CorrectPredictions'].where(predictedImages['BU_CODE'] == 'BU03639206').dropna(),
                       predictedImages['CorrectPredictions'].where(predictedImages['BU_CODE'] == 'BU03639205').dropna())
-print("f = " + str(f))
-print("p = " + str(p))
+print("Neighbourhoods: f = " + str(f))
+print("Neighbourhoods: p = " + str(p))
 
 

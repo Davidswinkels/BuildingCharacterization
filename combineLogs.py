@@ -11,12 +11,10 @@ import sys
 import csv
 import os
 
-print('Workspace:', os.getcwd())
-
 # Creating input variables for names
 iterations = [0, 1, 2, 3]
 building_classes = ['Residentia', 'Meeting', 'Industry', 'Office', 'Shop']
-architectures = ['inception_v3','mobilenet_1.0_224']
+architectures = ['inception_v3', 'mobilenet_1.0_224']
 fovs = ['F30', 'F60', 'F90', 'F30_60_90']
 
 # Create result file name

@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-## Import libraries
+# Import libraries
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -13,22 +13,22 @@ import ast
 from dateutil import relativedelta as rdelta
 from datetime import date
 
-def strRound(number1, number2):
+
+def round_numbers_to_string(number1, number2):
   return str(round(number1, 2)) + ' (' + str(round(number2, 2)) + ')'
 
-def calcDateTime(dateText):
-  year = dateText[:4]
-  month = dateText[5:7]
-  dateDifference = date(2016,11,1) - date(int(year), int(month), 1)
-  return(dateDifference.days)
+
+def calculate_date_time(datetext):
+  year = datetext[:4]
+  month = datetext[5:7]
+  dateDifference = date(2016, 11, 1) - date(int(year), int(month), 1)
+  return dateDifference.days
 
 
-print('Workspace:', os.getcwd())
 
 # Creating input variables for names
 iterations = [0]
 buildingClasses = ['Residentia', 'Meeting', 'Industry', 'Office', 'Shop']
-
 architectures = ['inception_v3']
 fovs = ['F30', 'F60', 'F90', 'F30_60_90']
 inputFilePath = './result/BuildingPointsPredictedLabels.csv'
@@ -36,28 +36,23 @@ outputDistFilePath = './result/DistanceCorrectPredictions.csv'
 outputBuildAgeFilePath = './result/BuildAgeCorrectPredictions.csv'
 outputImageAgeFilePath = './result/ImageAgeCorrectPredictions.csv'
 
-# building_labels_testing.to_csv(result_file_path)
-print('Load file of misclassified images from:', inputFilePath)
 predictedImages = pd.read_csv(inputFilePath)
-
+print('Loaded file with list of misclassified images from:', inputFilePath)
 print(predictedImages.columns.values)
 
-## Calculate distance from strings to integers
+# Calculate distance from strings to integers
 predictedImages['distance'] = predictedImages['distance'].str.replace(' m', '')
 predictedImages['distance'].apply(ast.literal_eval)
 predictedImages['distance'] = pd.to_numeric(predictedImages['distance'])
-
-
 predictedImages['Bouwjaar'] = 2016 - predictedImages['Bouwjaar']
+predictedImages['pano_date'] = predictedImages['pano_date'].apply(calculate_date_time)
 
-predictedImages['pano_date'] = predictedImages['pano_date'].apply(calcDateTime)
-
-
+# Create empty dictionaries to be filled with output data
 outputDistData = {}
 outputBuildAgeData = {}
 outputImageAgeData = {}
 
-## Append information from every model to csv file
+# Append information from every model to csv file
 for buildingClass in buildingClasses:
   outputCorrectColumnName = buildingClass[:4] + 'Correct'
   outputIncorrectColumnName = buildingClass[:4] + 'Incorrect'
@@ -84,12 +79,12 @@ for buildingClass in buildingClasses:
         corrImageAgeStd = predictedImages['pano_date'].where(predictedImages[buildingClass] == predictedImages[predictedColumnName]).dropna().std()
         incorrImageAgeAvg = predictedImages['pano_date'].where(predictedImages[buildingClass] != predictedImages[predictedColumnName]).dropna().mean()
         incorrImageAgeStd = predictedImages['pano_date'].where(predictedImages[buildingClass] != predictedImages[predictedColumnName]).dropna().std()
-        DistAvgCorrList.append(strRound(corrDistAvg, corrDistStd))
-        DistAvgIncorrList.append(strRound(incorrDistAvg, incorrDistStd))
-        BuildingAgeAvgCorrList.append(strRound(corrBuildAgeAvg, corrBuildAgeStd))
-        BuildingAgeAvgIncorrList.append(strRound(incorrBuildAgeAvg, incorrBuildAgeStd))
-        ImageAgeAvgCorrList.append(strRound(corrImageAgeAvg, corrImageAgeStd))
-        ImageAgeAvgIncorrList.append(strRound(incorrImageAgeAvg, incorrImageAgeStd))
+        DistAvgCorrList.append(round_numbers_to_string(corrDistAvg, corrDistStd))
+        DistAvgIncorrList.append(round_numbers_to_string(incorrDistAvg, incorrDistStd))
+        BuildingAgeAvgCorrList.append(round_numbers_to_string(corrBuildAgeAvg, corrBuildAgeStd))
+        BuildingAgeAvgIncorrList.append(round_numbers_to_string(incorrBuildAgeAvg, incorrBuildAgeStd))
+        ImageAgeAvgCorrList.append(round_numbers_to_string(corrImageAgeAvg, corrImageAgeStd))
+        ImageAgeAvgIncorrList.append(round_numbers_to_string(incorrImageAgeAvg, incorrImageAgeStd))
   outputDistData[outputCorrectColumnName] = DistAvgCorrList
   outputDistData[outputIncorrectColumnName] = DistAvgIncorrList
   outputBuildAgeData[outputCorrectColumnName] = BuildingAgeAvgCorrList
@@ -97,20 +92,10 @@ for buildingClass in buildingClasses:
   outputImageAgeData[outputCorrectColumnName] = ImageAgeAvgCorrList
   outputImageAgeData[outputIncorrectColumnName] = ImageAgeAvgIncorrList
 
-print(outputDistData)
-print(outputBuildAgeData)
-print(outputImageAgeData)
-print(predictedImages['distance'].mean())
-print(predictedImages['distance'].std())
-print(predictedImages['Bouwjaar'].mean())
-print(predictedImages['Bouwjaar'].std())
-print(predictedImages['pano_date'].mean())
-print(predictedImages['pano_date'].std())
-
+# Store dictionary in dataframe and save to file
 distDF = pd.DataFrame(data=outputDistData)
 ageBuildingDF = pd.DataFrame(data=outputBuildAgeData)
 ageImageDF = pd.DataFrame(data=outputImageAgeData)
-
 
 distDF.to_csv(outputDistFilePath)
 ageBuildingDF.to_csv(outputBuildAgeFilePath)

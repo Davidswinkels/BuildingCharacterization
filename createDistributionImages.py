@@ -1,29 +1,29 @@
 #!/usr/bin/env python2
-## Document information
+# Document information
 __author__ = "David Swinkels"
 __github__ = "davidswinkels"
 __purpose__ = "Part of MSc thesis Geo-Information Science at Wageningen University"
 __status__ = "Production"
 
-## Load modules
+# Load modules
 import os, sys, shutil
 import pandas
 import numpy as np
 
-## Load workspace
+# Load workspace
 os.chdir("D:\Workspace\Scripts")
 
-## Set parameters
+# Set parameters
 input_file = "./input/BuildingPointsValid.csv"
 training_perc = 60.0
 validation_perc = 20.0
 testing_perc = 20.0
 output_file = "D:\\Workspace\\Data\\streetview-master\\data_valid_resid_any"
 
-## Load data
+# Load data
 building_points = pandas.read_csv(input_file)
 
-## Check data
+# Check data
 print list(building_points)
 
 
@@ -41,42 +41,41 @@ for fovlevel in ["30", "60", "90"]:
 ## Select valid points only (valid = 'Yes')
 building_points_valid = building_points.loc[building_points['valid'] == 'Yes']
 
-## Find panorama with no images
+# Find panorama with no images
 buildings_unvalid = []
 for idx, building in building_points_valid.iterrows():
     filename = "N" + building['BU_CODE'] + "_B" + str(building['BuildingID']) + "_P" + building['pano_id'] + "_F30_A00.jpg"
     source_info = "\\" + building['BU_CODE'][-4:] + "\\" + filename
     source = "D:\\Workspace\\Data\\streetview-master\\data" + source_info
-    if os.path.isfile(source) == False:
+    if os.path.isfile(source) is False:
         buildings_unvalid += [building['BuildingID']]
     print "Source: " + source
     
-
-## Remove panorama point with no images
+# Remove panorama point with no images
 bu_points_rem = building_points_valid[~building_points_valid['BuildingID'].isin(buildings_unvalid)]
+bu_points_rem['Class'] = bu_points_rem['Residentia'].map(str) + bu_points_rem['Meeting'].map(str) + \
+                         bu_points_rem['Healthcare'].map(str) + bu_points_rem['Industry'].map(str) + \
+                         bu_points_rem['Office'].map(str) + bu_points_rem['Accommodat'].map(str) + \
+                         bu_points_rem['Education'].map(str) + bu_points_rem['Sport'].map(str) + \
+                         bu_points_rem['Shop'].map(str) + bu_points_rem['Other'].map(str)
 
-bu_points_rem['Class'] = bu_points_rem['Residentia'].map(str) + bu_points_rem['Meeting'].map(str) + bu_points_rem['Healthcare'].map(str) + bu_points_rem['Industry'].map(str) + bu_points_rem['Office'].map(str) + bu_points_rem['Accommodat'].map(str) + bu_points_rem['Education'].map(str) + bu_points_rem['Sport'].map(str) + bu_points_rem['Shop'].map(str) + bu_points_rem['Other'].map(str)
-
-## Select only useful columns ID, BU_CODE, BuildingID, Residentia
+# Select only useful columns ID, BU_CODE, BuildingID, Residentia
 images_valid = bu_points_rem.loc[:, ['ID', 'BuildingID', 'BU_CODE', 'pano_id', 'Class', 'Residentia']]
-##print images_valid
-images_valid['Resident'] = np.where(images_valid['Class']=='1000000000', 1, 0)
+images_valid['Resident'] = np.where(images_valid['Class'] == '1000000000', 1, 0)
 
-## Check distribution of residential images per BU_CODE
+# Check distribution of residential images per BU_CODE
 # Check distribution of buildings per neighbourhood
 building_distr = images_valid.groupby('BU_CODE')['BU_CODE'].count()
-##print building_distr
 
 # Check distribution of residential buildings per neighbourhood
 residential_building_distr = images_valid.groupby('BU_CODE')['Residentia'].sum()
-##print residential_building_distr
 
 # Check distribution of non-residential buildings per neighbourhood
 non_residential_building_distr = building_distr - residential_building_distr
-##print non_residential_building_distr
 
-## Create training, validation and testing datasets with similar distribution
-## Instantiate empty variables
+
+# Create training, validation and testing datasets with similar distribution
+# Instantiate empty variables
 training_neigh = []
 validation_neigh = []
 testing_neigh = []
@@ -87,10 +86,10 @@ validation_non_residential = 0.0
 testing_residential = 0.0
 testing_non_residential = 0.0
 
-## Create list of neighbourhood codes
+# Create list of neighbourhood codes
 neighbourhood_codes = images_valid['BU_CODE'].unique()
 
-## Loop over all neighbourhoods to assigin every neighbourhood to a training, validation or testing dataset
+# Loop over all neighbourhoods to assigin every neighbourhood to a training, validation or testing dataset
 for idx, neigh in enumerate(neighbourhood_codes):
     print "Iteration number: " + str(idx + 1)
     # Instantiate training, validation and testing datasets with 5 neighbourhoods each
@@ -121,38 +120,32 @@ for idx, neigh in enumerate(neighbourhood_codes):
             training_non_residential += float(non_residential_building_distr[idx])
             training_total = training_non_residential + training_residential
             training_resid_perc = (training_residential / training_total) * 100.0
-##            print "To training:" + str((float(training_total) / float(building_total)) * 100.0)
-##            print training_resid_perc
-        elif ((float(validation_total) / float(building_total)) * 100.0) < validation_perc:          
+        elif ((float(validation_total) / float(building_total)) * 100.0) < validation_perc:
             validation_neigh.append(neigh)
             validation_residential += float(residential_building_distr[idx])
             validation_non_residential += float(non_residential_building_distr[idx])
             validation_total = validation_non_residential + validation_residential
             validation_resid_perc = (validation_residential / validation_total) * 100.0
-##            print "To validation:" + str((float(validation_total) / float(building_total)) * 100.0)
-##            print validation_resid_perc
         elif ((float(testing_total) / float(building_total)) * 100.0) < testing_perc:
             testing_neigh.append(neigh)
             testing_residential += float(residential_building_distr[idx])
             testing_non_residential += float(non_residential_building_distr[idx])
             testing_total = testing_non_residential + testing_residential
             testing_resid_perc = (testing_residential / testing_total) * 100.0
-##            print "To testing:" + str((float(testing_total) / float(building_total)) * 100.0)
-##            print testing_resid_perc
         print "Total number of buildings added " + str(int(building_total) + residential_building_distr[idx] + non_residential_building_distr[idx]) + " out of " + str(sum(building_distr)) + " buildings"
 
-## Add information of training, validation and testing to pandas dataframe of images
+# Add information of training, validation and testing to pandas dataframe of images
 images_valid['type'] = "Undefined"
 for idx, image in images_valid.iterrows():
     if image['BU_CODE'] in training_neigh:
-        images_valid.at[int(image['ID']),'type'] = "Training"
+        images_valid.at[int(image['ID']), 'type'] = "Training"
     if image['BU_CODE'] in validation_neigh:
-        images_valid.at[int(image['ID']),'type'] = "Validation"
+        images_valid.at[int(image['ID']), 'type'] = "Validation"
     if image['BU_CODE'] in testing_neigh:
-        images_valid.at[int(image['ID']),'type'] = "Testing"
+        images_valid.at[int(image['ID']), 'type'] = "Testing"
 
         
-## Save images per fov in training, validation and testing repositories 
+# Save images per fov in training, validation and testing repositories
 for fovlevel in ["30", "60", "90"]:
     for idx, image in images_valid.iterrows():
         resid_info = "\\residential"
@@ -176,4 +169,3 @@ for fovlevel in ["30", "60", "90"]:
         print "Destination:" + destination
         shutil.copyfile(source, destination)
 
-    

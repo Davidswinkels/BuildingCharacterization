@@ -38,7 +38,7 @@ for building_class in building_classes:
         stats_file_name = './log/stats_' + building_class + '_' + fov + '_' + architecture + '_' + str(iteration) + '.csv'
         with open(stats_file_name, 'r') as stats_file:
           reader = csv.reader(stats_file)
-          reader.next() # skip header or first row of file
+          reader.next()   # skip header or first row of file
           outcome_stats_data = reader.next()
 
         # Open confusion matrix file for meeting and office
@@ -46,7 +46,7 @@ for building_class in building_classes:
           conf_file_name = './log/conf_' + building_class + '_' + fov + '_' + architecture + '_' + str(iteration) + '.csv'
           with open(conf_file_name, 'r') as conf_file:
             reader = csv.reader(conf_file)
-            reader.next() # skip header or first row of file
+            reader.next()   # skip header or first row of file
             conf_data_row1 = reader.next()
             conf_data_row2 = reader.next()
             conf_data_row3 = reader.next()

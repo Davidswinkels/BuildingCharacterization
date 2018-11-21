@@ -13,8 +13,6 @@ import os
 import pandas as pd
 import numpy as np
 
-print('Workspace:', os.getcwd())
-
 # Creating input variables for names
 iterations = [0, 1, 2, 3]
 building_classes = ['Residentia', 'Meeting', 'Industry', 'Office', 'Shop']

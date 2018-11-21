@@ -53,6 +53,7 @@ def create_image_lists(image_dir, building_class, fov , iteration):
     A dictionary containing an entry for each label subfolder, with images split
     into training, testing, and validation sets within each label.
   """
+  # Check if correct parameters are given
   if not gfile.Exists(image_dir):
     tf.logging.error("Image directory '" + image_dir + "' not found.")
   if type(building_class) != type('str'):
@@ -587,8 +588,7 @@ def get_random_cached_bottlenecks(sess, image_lists, how_many, category,
   else:
     # Retrieve all bottlenecks.
     for label_index, label_name in enumerate(image_lists.keys()):
-      for image_index, image_name in enumerate(
-          image_lists[label_name][category]):
+      for image_index, image_name in enumerate(image_lists[label_name][category]):
         image_name = get_image_path(image_lists, label_name, image_index,
                                     image_dir, category)
         bottleneck = get_or_create_bottleneck(
@@ -958,8 +958,8 @@ def main(_):
             [evaluation_step, cross_entropy],
             feed_dict={bottleneck_input: train_bottlenecks,
                        ground_truth_input: train_ground_truth})
-        #tf.logging.info('%s: Step %d: Train accuracy = %.1f%%' % (datetime.now(), i, train_accuracy * 100))
-        #tf.logging.info('%s: Step %d: Cross entropy = %f' % (datetime.now(), i, cross_entropy_value))
+        tf.logging.info('%s: Step %d: Train accuracy = %.1f%%' % (datetime.now(), i, train_accuracy * 100))
+        tf.logging.info('%s: Step %d: Cross entropy = %f' % (datetime.now(), i, cross_entropy_value))
         validation_bottlenecks, validation_ground_truth, _ = (
             get_random_cached_bottlenecks(
                 sess, image_lists, FLAGS.validation_batch_size, 'validation',
@@ -973,7 +973,7 @@ def main(_):
             feed_dict={bottleneck_input: validation_bottlenecks,
                        ground_truth_input: validation_ground_truth})
         validation_writer.add_summary(validation_summary, i)
-        #tf.logging.info('%s: Step %d: Validation accuracy = %.1f%% (N=%d)' %(datetime.now(), i, validation_accuracy * 100, len(validation_bottlenecks)))
+        tf.logging.info('%s: Step %d: Validation accuracy = %.1f%% (N=%d)' %(datetime.now(), i, validation_accuracy * 100, len(validation_bottlenecks)))
 
       # Store intermediate results
       intermediate_frequency = FLAGS.intermediate_store_frequency
@@ -1006,8 +1006,7 @@ def main(_):
     conf_matrix = pd.crosstab(test_ground_truth_pd,test_predictions_pd,
         rownames=['Actual'], colnames=['Predicted'], margins=True)
 
-    #tf.logging.info('Final test accuracy = %.1f%% (N=%d)' % (test_accuracy * 100, len(test_bottlenecks)))
-
+    # Calculate average accuracy
     class_accuracy = float(conf_matrix[0][0]) / float(conf_matrix['All'][0]) * 100.0
     non_class_accuracy = float(conf_matrix[1][1]) / float(conf_matrix['All'][1]) * 100.0
     average_accuracy = (class_accuracy + non_class_accuracy) / 2
@@ -1022,16 +1021,17 @@ def main(_):
     test_count = len(image_lists[class_label_name]['testing']) +\
                  len(image_lists[non_class_label_name]['testing'])
 
+    # Calculate kappa, precision, recall, computation time and
     proport_correct = (float(conf_matrix[0][0]) + float(conf_matrix[1][1])) / (
-        float(conf_matrix.at[('All','All')]))
+        float(conf_matrix.at[('All', 'All')]))
     prob_class = (((float(conf_matrix[0][0]) + float(conf_matrix[1][0])) /
-        float(conf_matrix.at[('All','All')]))) * (
+        float(conf_matrix.at[('All', 'All')]))) * (
         (float(conf_matrix[0][0]) + float(conf_matrix[0][1])) /
-        float(conf_matrix.at[('All','All')]))
+        float(conf_matrix.at[('All', 'All')]))
     prob_non_class = (((float(conf_matrix[0][1]) + float(conf_matrix[1][1])) /
-        float(conf_matrix.at[('All','All')]))) * (
+        float(conf_matrix.at[('All', 'All')]))) * (
         (float(conf_matrix[1][0]) + float(conf_matrix[1][1])) /
-        float(conf_matrix.at[('All','All')]))
+        float(conf_matrix.at[('All', 'All')]))
     prob_all = prob_class + prob_non_class
     kappa = (proport_correct - prob_all) / (1 - prob_all)
 
@@ -1055,7 +1055,8 @@ def main(_):
         wr = csv.writer(stats_file, quoting=csv.QUOTE_ALL)
         wr.writerow(['train_n', 'validation_n', 'test_n','kappa','precision',
                      'recall','computation_time(seconds)','test_accuracy', 'average_accuracy'])
-        row = [train_count,validation_count,test_count, kappa,precision,recall,comp_time.seconds,test_accuracy*100, average_accuracy]
+        row = [train_count, validation_count, test_count, kappa,precision,
+               recall, comp_time.seconds, test_accuracy*100, average_accuracy]
         wr.writerow(row)
     misclass_file_name = '/misclass_' + f_name
     with open((FLAGS.log_dir+misclass_file_name), 'wb') as misclass_file:
@@ -1223,10 +1224,8 @@ if __name__ == '__main__':
 
   # Creating input variables
   iterations = [0, 1, 2, 3]
-  #building_classes_all = ['Residentia', 'Meeting', 'Healthcare', 'Industry', 'Office','Accommodat', 'Education', 'Sport', 'Shop', 'Other']
-  #building_classes = ['Residentia', 'Meeting', 'Industry', 'Office', 'Shop']
-  building_classes = ['Meeting', 'Industry', 'Office', 'Shop']
-  architectures = ['inception_v3','mobilenet_1.0_224']
+  building_classes = ['Residentia', 'Meeting', 'Industry', 'Office', 'Shop']
+  architectures = ['inception_v3', 'mobilenet_1.0_224']
   fovs = ['F30', 'F60', 'F90', 'F30_60_90']
 
   # Looping over CNN models
